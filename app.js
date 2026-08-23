@@ -1,5 +1,6 @@
 require("dotenv").config();
 
+const path = require("path");
 const express = require("express");
 const cors = require("cors");
 const db = require("./config/db");
@@ -25,8 +26,8 @@ app.use(cors());
 app.use(express.json());
 
 // Serve static files (HTML, CSS, JS)
-app.use(express.static("public", { extensions: ["html"] }));
-app.use("/uploads",express.static("uploads"));
+app.use(express.static(path.join(__dirname, "public"), { extensions: ["html"] }));
+app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 app.use("/api", authRoutes);
 app.use("/api", requireAuth);
 app.use("/api", projectRoutes);
