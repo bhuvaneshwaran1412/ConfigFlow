@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>ConfigFlow Login</title>
+    <link rel="stylesheet" href="../css/style.css">
+</head>
+<body class="login-page">
+
+<main class="login-shell">
+    <section class="login-brand">
+        <div class="login-mark">CF</div>
+        <p class="eyebrow">Configuration control, simplified</p>
+        <h1>ConfigFlow</h1>
+        <p>Coordinate projects, changes, approvals, and releases from one calm workspace.</p>
+        <div class="login-brand-line"></div>
+        <span>Secure access for your delivery team</span>
+    </section>
+
+    <section class="login-box">
+        <div class="login-heading">
+            <span class="login-kicker">Workspace access</span>
+            <h2>Welcome back</h2>
+            <p>Sign in to continue to ConfigFlow.</p>
+        </div>
+
+    <div id="loginFields">
+        <input type="email" id="email" placeholder="Work email">
+
+        <div class="password-field">
+            <input type="password" id="password" placeholder="Password">
+            <button type="button" class="password-toggle" onclick="togglePassword('password', this)" aria-label="Show password">&#128065;</button>
+        </div>
+
+        <button type="button" onclick="login()">Login</button>
+    </div>
+
+    <div id="registerFields" hidden>
+        <input type="text" id="registerName" placeholder="Full name">
+
+        <input type="email" id="registerEmail" placeholder="Work email (@dev.ac.in or @manager.in)">
+
+        <input type="text" id="employeeId" placeholder="Employee ID">
+
+        <div class="password-field">
+            <input type="password" id="registerPassword" placeholder="Password (8+ characters)">
+            <button type="button" class="password-toggle" onclick="togglePassword('registerPassword', this)" aria-label="Show password">&#128065;</button>
+        </div>
+
+        <button type="button" onclick="registerDeveloper()">Create Account</button>
+    </div>
+
+    <p id="message"></p>
+
+    <button type="button" class="link-button" id="registerToggle" onclick="toggleRegistration()">
+        Need an account? Register
+    </button>
+</section>
+</main>
+
+<script src="../js/login.js"></script>
+
+</body>
+</html>
