@@ -4,3 +4,5 @@ uploads/*
 !uploads/.gitkeep
 server-output.log
 server-error.log
+ConfigFlow/
+*.sql
