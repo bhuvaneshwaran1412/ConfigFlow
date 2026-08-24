@@ -1,4 +1,5 @@
 const db = require("../config/db");
+const { getProjectScope } = require("../middleware/authorization");
 
 
 // =========================================
@@ -6,6 +7,7 @@ const db = require("../config/db");
 // =========================================
 
 const getReports = (req, res) => {
+    const scope = getProjectScope("p", req.user);
 
     const sql = `
         SELECT
@@ -24,11 +26,12 @@ const getReports = (req, res) => {
             ON cr.module_id = m.id
         JOIN users u
             ON cr.created_by = u.id
+        WHERE 1=1 ${scope.sql}
         ORDER BY cr.created_at DESC
     `;
 
 
-    db.query(sql, (err, result) => {
+    db.query(sql, scope.params, (err, result) => {
 
         if (err) {
 
@@ -55,40 +58,53 @@ const getReports = (req, res) => {
 // =========================================
 
 const getReportStats = (req, res) => {
+    const requestScope = getProjectScope("p", req.user);
+    const versionScope = getProjectScope("p", req.user);
+    const projectScope = getProjectScope("p", req.user);
 
     const sql = `
         SELECT
 
             (SELECT COUNT(*)
-             FROM change_requests)
+             FROM change_requests cr JOIN projects p ON p.id=cr.project_id
+             WHERE 1=1 ${requestScope.sql})
             AS totalRequests,
 
             (SELECT COUNT(*)
-             FROM change_requests
-             WHERE LOWER(status) = 'pending')
+             FROM change_requests cr JOIN projects p ON p.id=cr.project_id
+             WHERE LOWER(cr.status) = 'pending' ${requestScope.sql})
             AS pendingRequests,
 
             (SELECT COUNT(*)
-             FROM change_requests
-             WHERE LOWER(status) = 'approved')
+             FROM change_requests cr JOIN projects p ON p.id=cr.project_id
+             WHERE LOWER(cr.status) = 'approved' ${requestScope.sql})
             AS approvedRequests,
 
             (SELECT COUNT(*)
-             FROM change_requests
-             WHERE LOWER(status) = 'rejected')
+             FROM change_requests cr JOIN projects p ON p.id=cr.project_id
+             WHERE LOWER(cr.status) = 'rejected' ${requestScope.sql})
             AS rejectedRequests,
 
             (SELECT COUNT(*)
-             FROM versions)
+             FROM versions v JOIN projects p ON p.id=v.project_id
+             WHERE 1=1 ${versionScope.sql})
             AS totalVersions,
 
             (SELECT COUNT(*)
-             FROM projects)
+             FROM projects p
+             WHERE 1=1 ${projectScope.sql})
             AS totalProjects
     `;
 
 
-    db.query(sql, (err, result) => {
+    db.query(sql, [
+        ...requestScope.params,
+        ...requestScope.params,
+        ...requestScope.params,
+        ...requestScope.params,
+        ...versionScope.params,
+        ...projectScope.params
+    ], (err, result) => {
 
         if (err) {
 
@@ -118,6 +134,7 @@ const getReportStats = (req, res) => {
 // =========================================
 
 const getProjectReport = (req, res) => {
+    const scope = getProjectScope("p", req.user);
 
     const sql = `
         SELECT
@@ -132,11 +149,12 @@ const getProjectReport = (req, res) => {
             p.id,
             p.project_name,
             p.current_version
+        WHERE 1=1 ${scope.sql}
         ORDER BY p.id DESC
     `;
 
 
-    db.query(sql, (err, result) => {
+    db.query(sql, scope.params, (err, result) => {
 
         if (err) {
 
@@ -163,6 +181,7 @@ const getProjectReport = (req, res) => {
 // =========================================
 
 const getVersionReport = (req, res) => {
+    const scope = getProjectScope("p", req.user);
 
     const sql = `
         SELECT
@@ -174,11 +193,12 @@ const getVersionReport = (req, res) => {
         FROM versions v
         LEFT JOIN projects p
             ON v.project_id = p.id
+        WHERE 1=1 ${scope.sql}
         ORDER BY v.id DESC
     `;
 
 
-    db.query(sql, (err, result) => {
+    db.query(sql, scope.params, (err, result) => {
 
         if (err) {
 

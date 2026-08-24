@@ -74,12 +74,43 @@ function toggleRegistration() {
     message.textContent = "";
 }
 
+let employeePreviewRequest = 0;
+
+async function updateEmployeeIdPreview() {
+    const name = document.getElementById("registerName").value.trim();
+    const employeeId = document.getElementById("employeeId");
+    if (!name) {
+        employeeId.value = "";
+        return;
+    }
+
+    const requestId = ++employeePreviewRequest;
+    employeeId.value = "Generating...";
+    try {
+        const response = await fetch("/api/employee-id-preview");
+        const data = await response.json();
+        if (requestId === employeePreviewRequest) {
+            employeeId.value = response.ok && data.success ? data.employee_id : "CFG-0001";
+        }
+    } catch (error) {
+        if (requestId === employeePreviewRequest) employeeId.value = "CFG-0001";
+    }
+}
+
+document.getElementById("registerName")?.addEventListener("input", updateEmployeeIdPreview);
+
 async function registerDeveloper() {
     const name = document.getElementById("registerName").value.trim();
     const email = document.getElementById("registerEmail").value.trim();
-    const employee_id = document.getElementById("employeeId").value.trim();
     const password = document.getElementById("registerPassword").value;
+    const confirmPassword = document.getElementById("confirmPassword").value;
     const message = document.getElementById("message");
+
+    if (password !== confirmPassword) {
+        message.className = "error-message";
+        message.textContent = "Passwords do not match";
+        return;
+    }
 
     try {
         const response = await fetch("/api/register", {
@@ -87,7 +118,7 @@ async function registerDeveloper() {
             headers: {
                 "Content-Type": "application/json"
             },
-            body: JSON.stringify({ name, email, employee_id, password })
+            body: JSON.stringify({ name, email, password, confirm_password: confirmPassword })
         });
         const data = await readResponse(response);
 

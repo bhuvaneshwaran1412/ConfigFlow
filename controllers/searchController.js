@@ -1,10 +1,12 @@
 const db = require("../config/db");
+const { getProjectScope } = require("../middleware/authorization");
 
 const search = (req, res) => {
 
     const keyword = "%" + (req.query.keyword || "") + "%";
     const status = req.query.status || "";
     const priority = req.query.priority || "";
+    const scope = getProjectScope("p", req.user);
 
     const sql = `
         SELECT
@@ -44,6 +46,7 @@ const search = (req, res) => {
 
             AND (? = '' OR cr.status = ?)
             AND (? = '' OR cr.priority = ?)
+            ${scope.sql}
 
         ORDER BY cr.created_at DESC
     `;
@@ -60,7 +63,8 @@ const search = (req, res) => {
             status,
             status,
             priority,
-            priority
+            priority,
+            ...scope.params
         ],
         (err, result) => {
 

@@ -1,4 +1,5 @@
 const db = require("../config/db");
+const { writeAuditLog } = require("../utils/auditLog");
 
 
 // =========================================
@@ -6,10 +7,10 @@ const db = require("../config/db");
 // =========================================
 
 const getChangeRequests = (req, res) => {
-    const { user_id } = req.query;
+    const userId = req.user.id;
     const accessSql = "SELECT role FROM users WHERE id=?";
 
-    db.query(accessSql, [user_id], (userError, users) => {
+    db.query(accessSql, [userId], (userError, users) => {
         if (userError) return res.status(500).json(userError);
         if (!users.length) return res.status(401).json({ success: false, message: "User not found" });
 
@@ -18,10 +19,10 @@ const getChangeRequests = (req, res) => {
 
         if (users[0].role === "Manager") {
             scope = " AND p.project_manager_id=?";
-            params = [user_id];
+            params = [userId];
         } else if (users[0].role === "Developer") {
             scope = " AND cr.created_by=? AND EXISTS (SELECT 1 FROM project_developers pd2 WHERE pd2.project_id=cr.project_id AND pd2.developer_id=?)";
-            params = [user_id, user_id];
+            params = [userId, userId];
         }
 
         const sql = `
@@ -77,12 +78,12 @@ const addChangeRequest = (req, res) => {
         : null;
 
 
-    if (!project_id || !module_id || !title || !created_by) {
+    if (!project_id || !module_id || !title) {
 
         return res.status(400).json({
             success: false,
             message:
-                "Missing required fields. Please provide project_id, module_id, title, and created_by."
+                "Missing required fields. Please provide project_id, module_id, and title."
         });
 
     }
@@ -93,16 +94,18 @@ const addChangeRequest = (req, res) => {
                 SELECT 1 FROM project_developers pd
                 WHERE pd.project_id=p.id AND pd.developer_id=u.id
             ) AS is_assigned
-        FROM users u CROSS JOIN projects p
-        WHERE u.id=? AND p.id=?
+        FROM users u
+        JOIN projects p ON p.id=?
+        JOIN modules m ON m.id=? AND m.project_id=p.id
+        WHERE u.id=?
     `;
 
-    db.query(accessSql, [created_by, project_id], (accessError, access) => {
+    db.query(accessSql, [project_id, module_id, req.user.id], (accessError, access) => {
         if (accessError) return res.status(500).json(accessError);
         if (!access.length) return res.status(403).json({ success: false, message: "Invalid user or project" });
 
         const permitted = access[0].role === "Admin" ||
-            (access[0].role === "Manager" && String(access[0].project_manager_id) === String(created_by)) ||
+            (access[0].role === "Manager" && String(access[0].project_manager_id) === String(req.user.id)) ||
             (access[0].role === "Developer" && access[0].is_assigned);
 
         if (!permitted) {
@@ -133,7 +136,7 @@ const addChangeRequest = (req, res) => {
             description,
             priority,
             attachment,
-            created_by
+            req.user.id
         ],
         (err, result) => {
 
@@ -155,6 +158,7 @@ const addChangeRequest = (req, res) => {
                 id: result.insertId,
                 attachment: attachment
             });
+            writeAuditLog(req.user.id, "Created Change Request", title);
 
         }
         );
@@ -172,10 +176,20 @@ const deleteChangeRequest = (req, res) => {
     const id = req.params.id;
 
 
+    const sql = `
+        DELETE cr FROM change_requests cr
+        JOIN projects p ON p.id=cr.project_id
+        WHERE cr.id=? AND (
+            ? = 'Admin'
+            OR (? = 'Manager' AND p.project_manager_id=?)
+            OR (? = 'Developer' AND cr.created_by=?)
+        )
+    `;
+
     db.query(
-        "DELETE FROM change_requests WHERE id=?",
-        [id],
-        (err) => {
+        sql,
+        [id, req.user.role, req.user.role, req.user.id, req.user.id, req.user.id],
+        (err, result) => {
 
             if (err) {
 
@@ -186,10 +200,18 @@ const deleteChangeRequest = (req, res) => {
             }
 
 
+            if (!result.affectedRows) {
+                return res.status(404).json({
+                    success: false,
+                    message: "Change request not found or not accessible"
+                });
+            }
+
             res.json({
                 success: true,
                 message: "Deleted Successfully"
             });
+            writeAuditLog(req.user.id, "Deleted Change Request", id);
 
         }
     );

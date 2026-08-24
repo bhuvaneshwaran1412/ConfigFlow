@@ -99,6 +99,9 @@ async function loadRecentRequests() {
         );
 
         const requests = await response.json();
+        if (!response.ok || !Array.isArray(requests)) {
+            throw new Error(requests.message || "Unable to load recent requests");
+        }
 
         const table = document.getElementById("recentRequests");
 
@@ -144,7 +147,7 @@ async function loadRecentRequests() {
 
     catch (error) {
 
-        console.error("Request Error:", error);
+        window.showToast?.(error.message, "error");
 
     }
 
@@ -160,6 +163,9 @@ async function loadProjects() {
         const response = await fetch(`/api/projects?user_id=${encodeURIComponent(user.id)}`);
 
         const projects = await response.json();
+        if (!response.ok || !Array.isArray(projects)) {
+            throw new Error(projects.message || "Unable to load projects");
+        }
 
         const table = document.getElementById("projectSummary");
 
@@ -194,7 +200,7 @@ async function loadProjects() {
 
     catch (error) {
 
-        console.error("Project Error:", error);
+        window.showToast?.(error.message, "error");
 
     }
 

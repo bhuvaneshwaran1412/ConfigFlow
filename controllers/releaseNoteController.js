@@ -1,4 +1,5 @@
 const db = require("../config/db");
+const { writeAuditLog } = require("../utils/auditLog");
 
 
 const getReleaseNotes = (req, res) => {
@@ -42,9 +43,9 @@ const getReleaseNotes = (req, res) => {
 };
 
 const addReleaseNote = (req, res) => {
-    const { version_id, notes, created_by } = req.body;
+    const { version_id, notes } = req.body;
 
-    if (!version_id || !notes || !created_by) {
+    if (!version_id || !notes) {
         return res.status(400).json({
             success: false,
             message: "Version, notes, and creator are required"
@@ -53,7 +54,7 @@ const addReleaseNote = (req, res) => {
 
     const userSql = "SELECT role FROM users WHERE id=?";
 
-    db.query(userSql, [created_by], (err, users) => {
+    db.query(userSql, [req.user.id], (err, users) => {
         if (err) {
             console.error(err);
             return res.status(500).json({
@@ -88,6 +89,7 @@ const addReleaseNote = (req, res) => {
                 message: "Release note published",
                 id: result.insertId
             });
+            writeAuditLog(req.user.id, "Created Release Note", version_id);
         });
     });
 };

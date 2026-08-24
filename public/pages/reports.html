@@ -16,7 +16,7 @@
 </head>
 
 
-<body>
+<body class="reports-page">
 
 
     <aside class="sidebar">
@@ -88,6 +88,7 @@
 
             <div>
 
+                <span class="page-kicker">Operational intelligence</span>
                 <h1>
                     Reports
                 </h1>
@@ -104,10 +105,10 @@
 
         <!-- STATISTICS -->
 
-        <section class="cards">
+        <section class="cards report-metrics" aria-label="Report summary">
 
 
-            <div class="card">
+            <div class="card report-card report-card-total">
 
                 <h3>
                     Total Requests
@@ -120,7 +121,7 @@
             </div>
 
 
-            <div class="card">
+            <div class="card report-card report-card-pending">
 
                 <h3>
                     Pending
@@ -133,7 +134,7 @@
             </div>
 
 
-            <div class="card">
+            <div class="card report-card report-card-approved">
 
                 <h3>
                     Approved
@@ -146,7 +147,7 @@
             </div>
 
 
-            <div class="card">
+            <div class="card report-card report-card-rejected">
 
                 <h3>
                     Rejected
@@ -159,7 +160,7 @@
             </div>
 
 
-            <div class="card">
+            <div class="card report-card report-card-versions">
 
                 <h3>
                     Total Versions
@@ -172,7 +173,7 @@
             </div>
 
 
-            <div class="card">
+            <div class="card report-card report-card-projects">
 
                 <h3>
                     Total Projects
@@ -189,16 +190,21 @@
 
 
 
+        <div class="reports-tables">
+
         <!-- PROJECT REPORT -->
 
-        <section class="dashboard-section">
+        <section class="dashboard-section report-panel">
 
 
             <div class="section-header">
 
-                <h2>
+                <div>
+                    <span class="section-kicker">Portfolio</span>
+                    <h2>
                     Project Report
-                </h2>
+                    </h2>
+                </div>
 
             </div>
 
@@ -255,14 +261,17 @@
 
         <!-- VERSION REPORT -->
 
-        <section class="dashboard-section">
+        <section class="dashboard-section report-panel">
 
 
             <div class="section-header">
 
-                <h2>
+                <div>
+                    <span class="section-kicker">Release history</span>
+                    <h2>
                     Version Report
-                </h2>
+                    </h2>
+                </div>
 
             </div>
 
@@ -318,6 +327,8 @@
 
 
         </section>
+
+        </div>
 
 
     </main>

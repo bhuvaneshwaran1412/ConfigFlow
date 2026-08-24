@@ -12,6 +12,7 @@ const {
 const {
     approveRequest
 } = require("../controllers/approvalController");
+const { authorizeRoles } = require("../middleware/authorization");
 
 
 // =====================================
@@ -45,6 +46,7 @@ const upload = multer({
 
 router.put(
     "/change-requests/:id/approve",
+    authorizeRoles("Admin", "Manager"),
     approveRequest
 );
 

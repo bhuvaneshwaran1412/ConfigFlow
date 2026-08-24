@@ -24,29 +24,42 @@
         </div>
 
     <div id="loginFields">
+        <label class="sr-only" for="email">Work email</label>
         <input type="email" id="email" placeholder="Work email">
 
         <div class="password-field">
+            <label class="sr-only" for="password">Password</label>
             <input type="password" id="password" placeholder="Password">
-            <button type="button" class="password-toggle" onclick="togglePassword('password', this)" aria-label="Show password">&#128065;</button>
+            <button type="button" class="password-toggle" onclick="togglePassword('password', this)" aria-label="Show password"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2 12s3.5-6 10-6 10 6 10 6-3.5 6-10 6S2 12 2 12Z"></path><circle cx="12" cy="12" r="2.5"></circle></svg></button>
         </div>
 
         <button type="button" onclick="login()">Login</button>
     </div>
 
     <div id="registerFields" hidden>
+        <label class="sr-only" for="registerName">Full name</label>
         <input type="text" id="registerName" placeholder="Full name">
 
+        <label for="employeeId">Employee ID</label>
+        <div class="employee-id-field">
+            <input type="text" id="employeeId" placeholder="Automatically assigned" readonly aria-describedby="employeeIdHint">
+            <span class="lock-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><rect x="5" y="10" width="14" height="10" rx="2"></rect><path d="M8 10V7a4 4 0 0 1 8 0v3"></path></svg></span>
+        </div>
+        <small id="employeeIdHint">Automatically assigned</small>
+
+        <label class="sr-only" for="registerEmail">Work email</label>
         <input type="email" id="registerEmail" placeholder="Work email (@dev.ac.in or @manager.in)">
 
-        <input type="text" id="employeeId" placeholder="Employee ID">
-
         <div class="password-field">
+            <label class="sr-only" for="registerPassword">Password</label>
             <input type="password" id="registerPassword" placeholder="Password (8+ characters)">
-            <button type="button" class="password-toggle" onclick="togglePassword('registerPassword', this)" aria-label="Show password">&#128065;</button>
+            <button type="button" class="password-toggle" onclick="togglePassword('registerPassword', this)" aria-label="Show password"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2 12s3.5-6 10-6 10 6 10 6-3.5 6-10 6S2 12 2 12Z"></path><circle cx="12" cy="12" r="2.5"></circle></svg></button>
         </div>
 
-        <button type="button" onclick="registerDeveloper()">Create Account</button>
+        <label class="sr-only" for="confirmPassword">Confirm password</label>
+        <input type="password" id="confirmPassword" placeholder="Confirm password">
+
+        <button type="button" onclick="registerDeveloper()">Register</button>
     </div>
 
     <p id="message"></p>

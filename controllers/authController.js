@@ -10,7 +10,11 @@ const login = (req, res) => {
 
     db.query(sql, [email], async (err, result) => {
         if (err) {
-            return res.status(500).json(err);
+            console.error(err);
+            return res.status(500).json({
+                success: false,
+                message: "Unable to process login"
+            });
         }
 
         if (result.length === 0) {
@@ -73,18 +77,41 @@ const logout = (req, res) => {
     res.json({ success: true, message: "Logged out" });
 };
 
-const register = (req, res) => {
-    const { name, email, employee_id, password } = req.body;
+const getEmployeeIdPreview = (req, res) => {
+    db.query(
+        `SELECT COALESCE(MAX(CAST(SUBSTRING(employee_id, 5) AS UNSIGNED)), 0) + 1 AS next_number
+         FROM users
+         WHERE employee_id REGEXP '^CFG-[0-9]+$'`,
+        (err, result) => {
+            if (err) {
+                console.error(err);
+                return res.status(500).json({ success: false, message: "Unable to generate employee ID preview" });
+            }
 
-    if (!name || !email || !employee_id || !password) {
+            const nextNumber = Number(result[0].next_number);
+            res.json({
+                success: true,
+                employee_id: `CFG-${String(nextNumber).padStart(4, "0")}`
+            });
+        }
+    );
+};
+
+const register = (req, res) => {
+    const { name, email, password, confirm_password } = req.body;
+
+    if (!name || !email || !password) {
         return res.status(400).json({
             success: false,
-            message: "Name, work email, employee ID, and password are required"
+            message: "Name, work email, and password are required"
         });
     }
 
+    if (confirm_password !== undefined && password !== confirm_password) {
+        return res.status(400).json({ success: false, message: "Passwords do not match" });
+    }
+
     const normalizedEmail = email.trim().toLowerCase();
-    const normalizedEmployeeId = employee_id.trim();
 
     if (!/^\S+@\S+\.\S+$/.test(normalizedEmail)) {
         return res.status(400).json({
@@ -116,10 +143,10 @@ const register = (req, res) => {
     const existingSql = `
         SELECT id
         FROM users
-        WHERE email=? OR employee_id=?
+        WHERE email=?
     `;
 
-    db.query(existingSql, [normalizedEmail, normalizedEmployeeId], (err, existingUsers) => {
+    db.query(existingSql, [normalizedEmail], (err, existingUsers) => {
         if (err) {
             console.error(err);
             return res.status(500).json({
@@ -149,26 +176,45 @@ const register = (req, res) => {
                 });
             }
 
-            db.query(
-            insertSql,
-            [name.trim(), normalizedEmail, normalizedEmployeeId, passwordHash, role],
-            insertError => {
-                if (insertError) {
-                    console.error(insertError);
-                    return res.status(500).json({
-                        success: false,
-                        message: "Could not create account"
-                    });
-                }
+            const insertWithGeneratedId = attempt => {
+                db.query(
+                    `SELECT COALESCE(MAX(CAST(SUBSTRING(employee_id, 5) AS UNSIGNED)), 0) + 1 AS next_number
+                     FROM users
+                     WHERE employee_id REGEXP '^CFG-[0-9]+$'`,
+                    (sequenceError, sequenceResult) => {
+                        if (sequenceError) {
+                            console.error(sequenceError);
+                            return res.status(500).json({ success: false, message: "Could not assign employee ID" });
+                        }
 
-                res.status(201).json({
-                    success: true,
-                    message: `${role} account created. You can now log in.`
-                });
-            }
-            );
+                        const nextNumber = Number(sequenceResult[0].next_number);
+                        const employeeId = `CFG-${String(nextNumber).padStart(4, "0")}`;
+                        db.query(
+                            insertSql,
+                            [name.trim(), normalizedEmail, employeeId, passwordHash, role],
+                            insertError => {
+                                if (insertError && insertError.code === "ER_DUP_ENTRY" && attempt < 5) {
+                                    return insertWithGeneratedId(attempt + 1);
+                                }
+                                if (insertError) {
+                                    console.error(insertError);
+                                    return res.status(500).json({ success: false, message: "Could not create account" });
+                                }
+
+                                res.status(201).json({
+                                    success: true,
+                                    message: `${role} account created. You can now log in.`,
+                                    employee_id: employeeId
+                                });
+                            }
+                        );
+                    }
+                );
+            };
+
+            insertWithGeneratedId(0);
         });
     });
 };
 
-module.exports = { login, register, logout };
+module.exports = { login, register, logout, getEmployeeIdPreview };

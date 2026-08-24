@@ -1,6 +1,7 @@
 const express = require("express");
 
 const router = express.Router();
+const { authorizeRoles } = require("../middleware/authorization");
 
 const {
     getReleaseNotes,
@@ -13,10 +14,7 @@ router.get(
     getReleaseNotes
 );
 
-router.post(
-    "/release-notes",
-    addReleaseNote
-);
+router.post("/release-notes", authorizeRoles("Admin"), addReleaseNote);
 
 
 module.exports = router;

@@ -1,8 +1,10 @@
 const db = require("../config/db");
+const { checkProjectAccess } = require("../middleware/authorization");
+const { writeAuditLog } = require("../utils/auditLog");
 
 // Get all modules with project name
 const getModules = (req, res) => {
-    const { user_id } = req.query;
+    const userId = req.user.id;
     const sql = `
         SELECT modules.*, projects.project_name,
             CASE WHEN u.role='Admin'
@@ -17,18 +19,18 @@ const getModules = (req, res) => {
         LEFT JOIN users u ON u.id=?
     `;
 
-    db.query(sql, [user_id], (err, result) => {
-        if (err) return res.status(500).json(err);
+    db.query(sql, [userId], (err, result) => {
+        if (err) return res.status(500).json({ success: false, message: "Failed to load modules" });
         res.json(result);
     });
 };
 
 // Add module
 const addModule = (req, res) => {
-    const { project_id, module_name, description, created_by } = req.body;
+    const { project_id, module_name, description } = req.body;
 
-    checkProjectAccess(created_by, project_id, (accessError, allowed) => {
-        if (accessError) return res.status(500).json(accessError);
+    checkProjectAccess(req.user.id, project_id, (accessError, allowed) => {
+        if (accessError) return res.status(500).json({ success: false, message: "Failed to verify project access" });
         if (!allowed) return res.status(403).json({ success: false, message: "You are not assigned to this project" });
 
         const sql = `
@@ -43,6 +45,7 @@ const addModule = (req, res) => {
                 success: true,
                 message: "Module Added Successfully"
             });
+            writeAuditLog(req.user.id, "Created Module", module_name);
         });
     });
 };
@@ -50,10 +53,10 @@ const addModule = (req, res) => {
 // Update module
 const updateModule = (req, res) => {
     const { id } = req.params;
-    const { project_id, module_name, description, updated_by } = req.body;
+    const { project_id, module_name, description } = req.body;
 
-    checkModuleAccess(updated_by, id, project_id, (accessError, allowed) => {
-        if (accessError) return res.status(500).json(accessError);
+    checkModuleAccess(req.user.id, id, project_id, (accessError, allowed) => {
+        if (accessError) return res.status(500).json({ success: false, message: "Failed to verify module access" });
         if (!allowed) return res.status(403).json({ success: false, message: "You can edit modules only in your assigned projects" });
 
         const sql = `
@@ -69,6 +72,7 @@ const updateModule = (req, res) => {
                 success: true,
                 message: "Module Updated Successfully"
             });
+            writeAuditLog(req.user.id, "Updated Module", id);
         });
     });
 };
@@ -77,10 +81,8 @@ const updateModule = (req, res) => {
 const deleteModule = (req, res) => {
     const { id } = req.params;
 
-    const { deleted_by } = req.body;
-
-    checkModuleAccess(deleted_by, id, null, (accessError, allowed) => {
-        if (accessError) return res.status(500).json(accessError);
+    checkModuleAccess(req.user.id, id, null, (accessError, allowed) => {
+        if (accessError) return res.status(500).json({ success: false, message: "Failed to verify module access" });
         if (!allowed) return res.status(403).json({ success: false, message: "You can delete modules only in your assigned projects" });
 
         db.query("DELETE FROM modules WHERE id=?", [id], (err) => {
@@ -90,28 +92,10 @@ const deleteModule = (req, res) => {
                 success: true,
                 message: "Module Deleted Successfully"
             });
+            writeAuditLog(req.user.id, "Deleted Module", id);
         });
     });
 };
-
-function checkProjectAccess(userId, projectId, callback) {
-    const sql = `
-        SELECT u.role, p.project_manager_id,
-            EXISTS (SELECT 1 FROM project_developers pd
-                WHERE pd.project_id=p.id AND pd.developer_id=u.id) AS is_assigned
-        FROM users u JOIN projects p ON p.id=?
-        WHERE u.id=?
-    `;
-
-    db.query(sql, [projectId, userId], (err, rows) => {
-        if (err) return callback(err);
-        if (!rows.length) return callback(null, false);
-        const row = rows[0];
-        callback(null, row.role === "Admin" ||
-            (row.role === "Manager" && String(row.project_manager_id) === String(userId)) ||
-            (row.role === "Developer" && row.is_assigned));
-    });
-}
 
 function checkModuleAccess(userId, moduleId, targetProjectId, callback) {
     db.query("SELECT project_id FROM modules WHERE id=?", [moduleId], (err, rows) => {

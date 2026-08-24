@@ -11,11 +11,6 @@ const BACKUP_TABLES = [
 ];
 
 function verifyAdmin(userId, callback) {
-    if (!userId) {
-        callback(null, false);
-        return;
-    }
-
     db.query(
         "SELECT role FROM users WHERE id=?",
         [userId],
@@ -31,7 +26,7 @@ function verifyAdmin(userId, callback) {
 }
 
 function getBackup(req, res) {
-    verifyAdmin(req.query.user_id, (err, isAdmin) => {
+    verifyAdmin(req.user.id, (err, isAdmin) => {
         if (err) {
             return res.status(500).json({ success: false, message: "Failed to verify user" });
         }
@@ -70,9 +65,9 @@ function getBackup(req, res) {
 }
 
 function restoreBackup(req, res) {
-    const { user_id, backup } = req.body;
+    const { backup } = req.body;
 
-    verifyAdmin(user_id, (err, isAdmin) => {
+    verifyAdmin(req.user.id, (err, isAdmin) => {
         if (err) {
             return res.status(500).json({ success: false, message: "Failed to verify user" });
         }

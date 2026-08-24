@@ -1,10 +1,12 @@
 const db = require("../config/db");
+const { checkProjectAccess } = require("../middleware/authorization");
+const { writeAuditLog } = require("../utils/auditLog");
 
 // Get All Projects
 const getProjects = (req, res) => {
-    const { user_id } = req.query;
+    const userId = req.user.id;
 
-    db.query("SELECT role FROM users WHERE id=?", [user_id], (userError, users) => {
+    db.query("SELECT role FROM users WHERE id=?", [userId], (userError, users) => {
         if (userError) return res.status(500).json(userError);
         if (!users.length) return res.status(401).json({ success: false, message: "User not found" });
 
@@ -23,7 +25,7 @@ const getProjects = (req, res) => {
             ORDER BY p.id DESC
         `;
 
-        db.query(sql, [user_id], (err, result) => {
+        db.query(sql, [userId], (err, result) => {
             if (err) return res.status(500).json(err);
             res.json(result);
         });
@@ -35,47 +37,23 @@ const addProject = (req, res) => {
     const {
         project_name,
         description,
-        current_version,
-        created_by
+        current_version
     } = req.body;
 
-    if (!created_by) {
-        return res.status(400).json({
-            success: false,
-            message: "Admin user is required to create a project"
-        });
-    }
-
-    db.query(
-        "SELECT role FROM users WHERE id=?",
-        [created_by],
-        (userError, users) => {
-            if (userError) {
-                return res.status(500).json(userError);
-            }
-
-            if (!users.length || users[0].role !== "Admin") {
-                return res.status(403).json({
-                    success: false,
-                    message: "Only Admin users can create projects"
-                });
-            }
-
-            const sql = `
+    const sql = `
                 INSERT INTO projects(project_name, description, current_version)
                 VALUES(?,?,?)
             `;
 
-            db.query(sql, [project_name, description, current_version], (err) => {
-                if (err) return res.status(500).json(err);
+    db.query(sql, [project_name, description, current_version], (err) => {
+        if (err) return res.status(500).json({ success: false, message: "Failed to create project" });
 
-                res.json({
-                    success: true,
-                    message: "Project Added Successfully"
-                });
-            });
-        }
-    );
+        res.json({
+            success: true,
+            message: "Project Added Successfully"
+        });
+        writeAuditLog(req.user.id, "Created Project", project_name);
+    });
 };
 
 // Update Project
@@ -83,18 +61,27 @@ const updateProject = (req, res) => {
     const { id } = req.params;
     const { project_name, description, current_version } = req.body;
 
-    const sql = `
+    checkProjectAccess(req.user.id, id, (accessError, allowed, access) => {
+        if (accessError) return res.status(500).json({ success: false, message: "Failed to verify project access" });
+        if (!allowed || (access.role !== "Admin" && access.role !== "Manager")) {
+            return res.status(403).json({ success: false, message: "You can edit only your assigned projects" });
+        }
+
+        const sql = `
         UPDATE projects
         SET project_name=?, description=?, current_version=?
         WHERE id=?
     `;
 
-    db.query(sql, [project_name, description, current_version, id], (err) => {
-        if (err) return res.status(500).json(err);
+        db.query(sql, [project_name, description, current_version, id], (err, result) => {
+        if (err) return res.status(500).json({ success: false, message: "Failed to update project" });
+        if (!result.affectedRows) return res.status(404).json({ success: false, message: "Project not found" });
 
         res.json({
             success: true,
             message: "Project Updated Successfully"
+        });
+        writeAuditLog(req.user.id, "Updated Project", id);
         });
     });
 };
@@ -105,20 +92,20 @@ const deleteProject = (req, res) => {
 
     const sql = "DELETE FROM projects WHERE id=?";
 
-    db.query(sql, [id], (err) => {
+    db.query(sql, [id], (err, result) => {
         if (err) return res.status(500).json(err);
+        if (!result.affectedRows) return res.status(404).json({ success: false, message: "Project not found" });
 
         res.json({
             success: true,
             message: "Project Deleted Successfully"
         });
+        writeAuditLog(req.user.id, "Deleted Project", id);
     });
 };
 
 const getAssignableUsers = (req, res) => {
-    const { user_id } = req.query;
-
-    db.query("SELECT role FROM users WHERE id=?", [user_id], (err, users) => {
+    db.query("SELECT role FROM users WHERE id=?", [req.user.id], (err, users) => {
         if (err) return res.status(500).json(err);
         if (!users.length) return res.status(401).json({ success: false, message: "User not found" });
 
@@ -132,9 +119,9 @@ const getAssignableUsers = (req, res) => {
 
 const assignManager = (req, res) => {
     const { id } = req.params;
-    const { manager_id, assigned_by } = req.body;
+    const { manager_id } = req.body;
 
-    db.query("SELECT role FROM users WHERE id=?", [assigned_by], (err, users) => {
+    db.query("SELECT role FROM users WHERE id=?", [req.user.id], (err, users) => {
         if (err) return res.status(500).json(err);
         if (!users.length || users[0].role !== "Admin") {
             return res.status(403).json({ success: false, message: "Only Admin users can assign managers" });
@@ -154,6 +141,7 @@ const assignManager = (req, res) => {
                             : "Could not assign Project Manager"
                     });
                 }
+                writeAuditLog(req.user.id, "Assigned Project Manager", `Project ${id}, Manager ${manager_id}`);
                 res.json({ success: true, message: "Project Manager assigned" });
             });
         });
@@ -162,17 +150,17 @@ const assignManager = (req, res) => {
 
 const assignDeveloper = (req, res) => {
     const { id } = req.params;
-    const { developer_id, assigned_by } = req.body;
+    const { developer_id } = req.body;
     const accessSql = `
         SELECT u.role, p.project_manager_id
         FROM users u CROSS JOIN projects p
         WHERE u.id=? AND p.id=?
     `;
 
-    db.query(accessSql, [assigned_by, id], (err, access) => {
+    db.query(accessSql, [req.user.id, id], (err, access) => {
         if (err) return res.status(500).json(err);
         if (!access.length || (access[0].role !== "Admin" &&
-            !(access[0].role === "Manager" && String(access[0].project_manager_id) === String(assigned_by)))) {
+            !(access[0].role === "Manager" && String(access[0].project_manager_id) === String(req.user.id)))) {
             return res.status(403).json({ success: false, message: "Only the assigned Manager can add Developers" });
         }
 
@@ -188,6 +176,7 @@ const assignDeveloper = (req, res) => {
                         return res.status(409).json({ success: false, message: "Developer is already assigned" });
                     }
                     if (insertError) return res.status(500).json(insertError);
+                    writeAuditLog(req.user.id, "Assigned Developer", `Project ${id}, Developer ${developer_id}`);
                     res.json({ success: true, message: "Developer assigned to project" });
                 }
             );

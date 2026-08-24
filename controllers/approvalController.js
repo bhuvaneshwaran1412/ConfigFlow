@@ -1,24 +1,21 @@
 const db = require("../config/db");
+const { writeAuditLog } = require("../utils/auditLog");
 
 const approveRequest = (req, res) => {
 
     const { id } = req.params;
-    const {
-        status,
-        admin_comment,
-        approved_by
-    } = req.body;
+    const { status, admin_comment } = req.body;
 
 
     // =========================================
     // VALIDATION
     // =========================================
 
-    if (!status || !approved_by) {
+    if (!status) {
 
         return res.status(400).json({
             success: false,
-            message: "Status and approved_by are required"
+            message: "Status is required"
         });
 
     }
@@ -52,7 +49,7 @@ const approveRequest = (req, res) => {
 
     db.query(
         userSql,
-        [id, approved_by],
+        [id, req.user.id],
         (err, userResult) => {
 
             if (err) {
@@ -85,7 +82,7 @@ const approveRequest = (req, res) => {
             // =========================================
 
             if (user.role !== "Admin" &&
-                !(user.role === "Manager" && String(user.project_manager_id) === String(approved_by))) {
+                !(user.role === "Manager" && String(user.project_manager_id) === String(req.user.id))) {
 
                 return res.status(403).json({
                     success: false,
@@ -115,7 +112,7 @@ const approveRequest = (req, res) => {
                 [
                     status,
                     admin_comment,
-                    approved_by,
+                    req.user.id,
                     id
                 ],
                 (err) => {
@@ -134,6 +131,7 @@ const approveRequest = (req, res) => {
                     // =========================================
 
                     if (status === "Rejected") {
+                        writeAuditLog(req.user.id, "Rejected Change Request", id);
 
                         return res.json({
                             success: true,
@@ -207,7 +205,7 @@ const approveRequest = (req, res) => {
                                     version,
                                     request.title,
                                     new Date(),
-                                    approved_by
+                                    req.user.id
                                 ],
                                 (err, versionResult) => {
 
@@ -269,7 +267,7 @@ const approveRequest = (req, res) => {
                                             db.query(
                                                 auditSql,
                                                 [
-                                                    approved_by,
+                                                    req.user.id,
                                                     "Approved Change Request",
                                                     request.title
                                                 ],

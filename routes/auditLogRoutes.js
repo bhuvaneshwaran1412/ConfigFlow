@@ -1,6 +1,7 @@
 const express = require("express");
 
 const router = express.Router();
+const { authorizeRoles } = require("../middleware/authorization");
 
 const {
     getAuditLogs
@@ -9,6 +10,7 @@ const {
 
 router.get(
     "/audit-logs",
+    authorizeRoles("Admin"),
     getAuditLogs
 );
 
