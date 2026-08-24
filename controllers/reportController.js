@@ -134,6 +134,7 @@ const getReportStats = (req, res) => {
 // =========================================
 
 const getProjectReport = (req, res) => {
+
     const scope = getProjectScope("p", req.user);
 
     const sql = `
@@ -145,20 +146,22 @@ const getProjectReport = (req, res) => {
         FROM projects p
         LEFT JOIN change_requests cr
             ON p.id = cr.project_id
+
+        WHERE 1=1 ${scope.sql}
+
         GROUP BY
             p.id,
             p.project_name,
             p.current_version
-        WHERE 1=1 ${scope.sql}
+
         ORDER BY p.id DESC
     `;
-
 
     db.query(sql, scope.params, (err, result) => {
 
         if (err) {
 
-            console.error(err);
+            console.error("Project Report Error:", err);
 
             return res.status(500).json({
                 success: false,
@@ -166,7 +169,6 @@ const getProjectReport = (req, res) => {
             });
 
         }
-
 
         res.json(result);
 

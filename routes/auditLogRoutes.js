@@ -10,7 +10,7 @@ const {
 
 router.get(
     "/audit-logs",
-    authorizeRoles("Admin"),
+    authorizeRoles("Admin", "Manager", "Developer"),
     getAuditLogs
 );
 
