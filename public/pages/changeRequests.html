@@ -1,262 +1,152 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
     <title>ConfigFlow - Change Requests</title>
-
     <link rel="stylesheet" href="../css/style.css">
 </head>
-
 <body>
 
+    <!-- SIDEBAR -->
     <aside class="sidebar">
-
         <div class="logo">
-            ⚙️ ConfigFlow
+            <span class="logo-mark">CF</span>
+            <span class="logo-text">ConfigFlow</span>
         </div>
 
         <nav>
-
-    <a href="dashboard.html">
-        🏠 Dashboard
-    </a>
-
-    <a href="projects.html">
-        📁 Projects
-    </a>
-
-    <a href="modules.html">
-        ▦ Modules
-    </a>
-
-    <a href="changeRequests.html">
-        🔄 Change Requests
-    </a>
-
-    <a href="approval.html" id="approvalLink">
-        ✓ Approvals
-    </a>
-
-    <a href="versions.html">
-        🚀 Versions
-    </a>
-
-    <a href="releaseNotes.html">
-        📄 Release Notes
-    </a>
-
-    <a href="reports.html">
-        📊 Reports
-    </a>
-
-    <a href="auditLogs.html">
-        📋 Audit Logs
-    </a>
-
-</nav>
+            <a href="dashboard.html" data-page="dashboard"><span class="nav-label">Dashboard</span></a>
+            <a href="projects.html" data-page="projects"><span class="nav-label">Projects</span></a>
+            <a href="modules.html" data-page="modules"><span class="nav-label">Modules</span></a>
+            <a href="changeRequests.html" class="active" data-page="changeRequests"><span class="nav-label">Change Requests</span></a>
+            <a href="approval.html" id="approvalLink" data-page="approvals"><span class="nav-label">Approvals</span></a>
+            <a href="versions.html" data-page="versions"><span class="nav-label">Versions</span></a>
+            <a href="releaseNotes.html" data-page="releaseNotes"><span class="nav-label">Release Notes</span></a>
+            <a href="reports.html" data-page="reports"><span class="nav-label">Reports</span></a>
+            <a href="auditLogs.html" data-page="auditLogs"><span class="nav-label">Audit Logs</span></a>
+            <a href="search.html" data-page="search"><span class="nav-label">Search</span></a>
+        </nav>
 
         <div class="sidebar-user">
-
             <strong id="sidebarUserName">User</strong>
-
             <span id="sidebarUserRole">Role</span>
-
         </div>
-
     </aside>
 
-
+    <!-- MAIN CONTENT -->
     <main class="main-content">
-
         <header class="topbar">
-
             <div>
-
                 <h1>Change Requests</h1>
-
-                <p>
-                    Submit and track software change requests
-                </p>
-
+                <p>Submit and track software change requests</p>
             </div>
 
-            <button
-                class="add-btn"
-                onclick="openRequestForm()"
-            >
+            <button type="button" class="add-btn" onclick="openRequestForm()">
                 + New Change Request
             </button>
-
         </header>
 
-
         <!-- CHANGE REQUEST FORM -->
-
-        <section
-            class="form-section"
-            id="requestFormSection"
-        >
-
-            <h2>Submit Change Request</h2>
-
-
-            <label>Project</label>
-
-            <select id="projectId">
-
-                <option value="">
-                    Select Project
-                </option>
-
-            </select>
-
-
-            <label>Module</label>
-
-            <select id="moduleId">
-
-                <option value="">
-                    Select Module
-                </option>
-
-            </select>
-
-
-            <label>Title</label>
-
-            <input
-                type="text"
-                id="requestTitle"
-                placeholder="Example: Fix Login Validation"
-            >
-
-
-            <label>Description</label>
-
-            <textarea
-                id="requestDescription"
-                placeholder="Describe the requested change..."
-            ></textarea>
-
-
-            <label>Priority</label>
-
-            <select id="priority">
-
-                <option value="">
-                    Select Priority
-                </option>
-
-                <option value="Low">
-                    Low
-                </option>
-
-                <option value="Medium">
-                    Medium
-                </option>
-
-                <option value="High">
-                    High
-                </option>
-
-                <option value="Critical">
-                    Critical
-                </option>
-
-            </select>
-            <div class="form-group">
-               <label for="attachment">Supporting File (Optional)</label>
-               <input type="file" id="attachment">
+        <section class="form-section" id="requestFormSection" style="display: none;">
+            <div class="section-header">
+                <h2>Submit Change Request</h2>
             </div>
 
-            <button onclick="submitRequest()">
-                Submit Request
-            </button>
+            <div class="form-group">
+                <label for="projectId">Project</label>
+                <select id="projectId">
+                    <option value="">Select Project</option>
+                </select>
+            </div>
 
-            <button
-                class="cancel-btn"
-                onclick="closeRequestForm()"
-            >
-                Cancel
-            </button>
+            <div class="form-group">
+                <label for="moduleId">Module</label>
+                <select id="moduleId">
+                    <option value="">Select Module</option>
+                </select>
+            </div>
 
+            <div class="form-group">
+                <label for="requestTitle">Title</label>
+                <input
+                    type="text"
+                    id="requestTitle"
+                    placeholder="Example: Fix Login Validation"
+                >
+            </div>
+
+            <div class="form-group">
+                <label for="requestDescription">Description</label>
+                <textarea
+                    id="requestDescription"
+                    placeholder="Describe the requested change..."
+                ></textarea>
+            </div>
+
+            <div class="form-group">
+                <label for="priority">Priority</label>
+                <select id="priority">
+                    <option value="">Select Priority</option>
+                    <option value="Low">Low</option>
+                    <option value="Medium">Medium</option>
+                    <option value="High">High</option>
+                    <option value="Critical">Critical</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label for="attachment">Supporting File (Optional)</label>
+                <input type="file" id="attachment">
+            </div>
+
+            <div class="form-actions">
+                <button type="button" class="add-btn" onclick="submitRequest()">
+                    Submit Request
+                </button>
+                <button type="button" class="cancel-btn" onclick="closeRequestForm()">
+                    Cancel
+                </button>
+            </div>
         </section>
 
-
         <!-- REQUEST TABLE -->
-
         <section class="dashboard-section">
-
             <div class="section-header">
-
                 <h2>My Change Requests</h2>
-
-                <span id="requestCount">
-                    0 Requests
-                </span>
-
+                <span id="requestCount">0 Requests</span>
             </div>
 
-
             <div class="table-container">
-
                 <table>
-
                     <thead>
-
                         <tr>
-
                             <th>ID</th>
-
                             <th>Title</th>
-
                             <th>Project</th>
-
                             <th>Module</th>
-
                             <th>Priority</th>
-
                             <th>Status</th>
-
                             <th>Review Comment</th>
-
                             <th>Reviewed</th>
-
                             <th>Date</th>
-
                             <th>Attachment</th>
-
                         </tr>
-
                     </thead>
-
-
                     <tbody id="requestsTable">
-
                         <tr>
-
                             <td colspan="10">
                                 Loading...
                             </td>
-
                         </tr>
-
                     </tbody>
-
                 </table>
-
             </div>
-
         </section>
-
     </main>
 
-
-    <script src="../js/changeRequests.js"></script>
+    <script src="../js/icons.js"></script>
     <script src="../js/sidebar.js"></script>
+    <script src="../js/changeRequests.js"></script>
 </body>
-
 </html>

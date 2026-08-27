@@ -1,3 +1,11 @@
+if (process.env.USE_MOCK_DB === "true" || process.env.DB_HOST === "mock") {
+    const MockDatabase = require("../tests/e2e/mock_db");
+    const mockDb = new MockDatabase();
+    console.log("⚡ [Demo Mode] Using In-Memory Database with sample data");
+    module.exports = mockDb;
+    return;
+}
+
 const mysql = require("mysql2");
 const isLocalDatabase = ["localhost", "127.0.0.1", "::1"].includes(process.env.DB_HOST);
 const useSsl = process.env.DB_SSL

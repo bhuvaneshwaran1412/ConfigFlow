@@ -1,343 +1,148 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
-
     <meta charset="UTF-8">
-
-    <meta name="viewport"
-          content="width=device-width, initial-scale=1.0">
-
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ConfigFlow - Reports</title>
-
-    <link rel="stylesheet"
-          href="../css/style.css">
-
+    <link rel="stylesheet" href="../css/style.css">
 </head>
-
-
 <body class="reports-page">
 
-
+    <!-- SIDEBAR -->
     <aside class="sidebar">
-
         <div class="logo">
-            ⚙️ ConfigFlow
+            <span class="logo-mark">CF</span>
+            <span class="logo-text">ConfigFlow</span>
         </div>
-
 
         <nav>
-
-            <a href="dashboard.html">
-                🏠 Dashboard
-            </a>
-
-            <a href="projects.html">
-                📁 Projects
-            </a>
-
-            <a href="modules.html">
-                ▦ Modules
-            </a>
-
-            <a href="changeRequests.html">
-                🔄 Change Requests
-            </a>
-
-            <a href="approval.html" id="approvalLink">✓ Approvals</a>
-
-            <a href="versions.html">
-                🚀 Versions
-            </a>
-
-            <a href="releaseNotes.html">
-                📄 Release Notes
-            </a>
-
-            <a href="reports.html" class="active">
-                📊 Reports
-            </a>
-
-            <a href="auditLogs.html">
-                📋 Audit Logs
-            </a>
-
+            <a href="dashboard.html" data-page="dashboard"><span class="nav-label">Dashboard</span></a>
+            <a href="projects.html" data-page="projects"><span class="nav-label">Projects</span></a>
+            <a href="modules.html" data-page="modules"><span class="nav-label">Modules</span></a>
+            <a href="changeRequests.html" data-page="changeRequests"><span class="nav-label">Change Requests</span></a>
+            <a href="approval.html" id="approvalLink" data-page="approvals"><span class="nav-label">Approvals</span></a>
+            <a href="versions.html" data-page="versions"><span class="nav-label">Versions</span></a>
+            <a href="releaseNotes.html" data-page="releaseNotes"><span class="nav-label">Release Notes</span></a>
+            <a href="reports.html" class="active" data-page="reports"><span class="nav-label">Reports</span></a>
+            <a href="auditLogs.html" data-page="auditLogs"><span class="nav-label">Audit Logs</span></a>
+            <a href="search.html" data-page="search"><span class="nav-label">Search</span></a>
         </nav>
 
-
         <div class="sidebar-user">
-
-            <strong id="sidebarUserName">
-                User
-            </strong>
-
-            <span id="sidebarUserRole">
-                Role
-            </span>
-
+            <strong id="sidebarUserName">User</strong>
+            <span id="sidebarUserRole">Role</span>
         </div>
-
     </aside>
 
-
-
+    <!-- MAIN CONTENT -->
     <main class="main-content">
-
-
         <header class="topbar">
-
             <div>
-
                 <span class="page-kicker">Operational intelligence</span>
-                <h1>
-                    Reports
-                </h1>
-
-                <p>
-                    Software Configuration Management Reports
-                </p>
-
+                <h1>Reports</h1>
+                <p>Software Configuration Management Reports & Metrics</p>
             </div>
-
         </header>
 
-
-
-        <!-- STATISTICS -->
-
+        <!-- STATISTICS METRIC CARDS -->
         <section class="cards report-metrics" aria-label="Report summary">
-
-
             <div class="card report-card report-card-total">
-
-                <h3>
-                    Total Requests
-                </h3>
-
-                <p id="totalRequests">
-                    0
-                </p>
-
+                <h3>Total Requests</h3>
+                <p id="totalRequests">0</p>
             </div>
-
 
             <div class="card report-card report-card-pending">
-
-                <h3>
-                    Pending
-                </h3>
-
-                <p id="pendingRequests">
-                    0
-                </p>
-
+                <h3>Pending</h3>
+                <p id="pendingRequests">0</p>
             </div>
-
 
             <div class="card report-card report-card-approved">
-
-                <h3>
-                    Approved
-                </h3>
-
-                <p id="approvedRequests">
-                    0
-                </p>
-
+                <h3>Approved</h3>
+                <p id="approvedRequests">0</p>
             </div>
-
 
             <div class="card report-card report-card-rejected">
-
-                <h3>
-                    Rejected
-                </h3>
-
-                <p id="rejectedRequests">
-                    0
-                </p>
-
+                <h3>Rejected</h3>
+                <p id="rejectedRequests">0</p>
             </div>
-
 
             <div class="card report-card report-card-versions">
-
-                <h3>
-                    Total Versions
-                </h3>
-
-                <p id="totalVersions">
-                    0
-                </p>
-
+                <h3>Total Versions</h3>
+                <p id="totalVersions">0</p>
             </div>
-
 
             <div class="card report-card report-card-projects">
-
-                <h3>
-                    Total Projects
-                </h3>
-
-                <p id="totalProjects">
-                    0
-                </p>
-
+                <h3>Total Projects</h3>
+                <p id="totalProjects">0</p>
             </div>
-
-
         </section>
-
-
 
         <div class="reports-tables">
-
-        <!-- PROJECT REPORT -->
-
-        <section class="dashboard-section report-panel">
-
-
-            <div class="section-header">
-
-                <div>
-                    <span class="section-kicker">Portfolio</span>
-                    <h2>
-                    Project Report
-                    </h2>
+            <!-- PROJECT REPORT -->
+            <section class="dashboard-section report-panel">
+                <div class="section-header">
+                    <div>
+                        <span class="section-kicker">Portfolio</span>
+                        <h2>Project Report</h2>
+                    </div>
                 </div>
 
-            </div>
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Project</th>
+                                <th>Current Version</th>
+                                <th>Total Requests</th>
+                            </tr>
+                        </thead>
+                        <tbody id="projectReportTable">
+                            <tr>
+                                <td colspan="4">
+                                    Loading...
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </section>
 
-
-            <div class="table-container">
-
-                <table>
-
-                    <thead>
-
-                        <tr>
-
-                            <th>
-                                ID
-                            </th>
-
-                            <th>
-                                Project
-                            </th>
-
-                            <th>
-                                Current Version
-                            </th>
-
-                            <th>
-                                Total Requests
-                            </th>
-
-                        </tr>
-
-                    </thead>
-
-
-                    <tbody id="projectReportTable">
-
-                        <tr>
-
-                            <td colspan="4">
-                                Loading...
-                            </td>
-
-                        </tr>
-
-                    </tbody>
-
-                </table>
-
-            </div>
-
-
-        </section>
-
-
-
-        <!-- VERSION REPORT -->
-
-        <section class="dashboard-section report-panel">
-
-
-            <div class="section-header">
-
-                <div>
-                    <span class="section-kicker">Release history</span>
-                    <h2>
-                    Version Report
-                    </h2>
+            <!-- VERSION REPORT -->
+            <section class="dashboard-section report-panel">
+                <div class="section-header">
+                    <div>
+                        <span class="section-kicker">Release history</span>
+                        <h2>Version Report</h2>
+                    </div>
                 </div>
 
-            </div>
-
-
-            <div class="table-container">
-
-                <table>
-
-                    <thead>
-
-                        <tr>
-
-                            <th>
-                                ID
-                            </th>
-
-                            <th>
-                                Project
-                            </th>
-
-                            <th>
-                                Version
-                            </th>
-
-                            <th>
-                                Description
-                            </th>
-
-                            <th>
-                                Release Date
-                            </th>
-
-                        </tr>
-
-                    </thead>
-
-
-                    <tbody id="versionReportTable">
-
-                        <tr>
-
-                            <td colspan="5">
-                                Loading...
-                            </td>
-
-                        </tr>
-
-                    </tbody>
-
-                </table>
-
-            </div>
-
-
-        </section>
-
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Project</th>
+                                <th>Version</th>
+                                <th>Description</th>
+                                <th>Release Date</th>
+                            </tr>
+                        </thead>
+                        <tbody id="versionReportTable">
+                            <tr>
+                                <td colspan="5">
+                                    Loading...
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </section>
         </div>
-
-
     </main>
 
-
-
-    <script src="../js/reports.js"></script>
+    <script src="../js/icons.js"></script>
     <script src="../js/sidebar.js"></script>
-
+    <script src="../js/reports.js"></script>
 </body>
-
 </html>

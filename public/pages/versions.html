@@ -1,102 +1,58 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
     <title>ConfigFlow - Versions</title>
-
     <link rel="stylesheet" href="../css/style.css">
 </head>
-
 <body>
 
+    <!-- SIDEBAR -->
     <aside class="sidebar">
-
         <div class="logo">
-            ⚙️ ConfigFlow
+            <span class="logo-mark">CF</span>
+            <span class="logo-text">ConfigFlow</span>
         </div>
 
         <nav>
-
-    <a href="dashboard.html">
-        🏠 Dashboard
-    </a>
-
-    <a href="projects.html">
-        📁 Projects
-    </a>
-
-    <a href="modules.html">
-        ▦ Modules
-    </a>
-
-    <a href="changeRequests.html">
-        🔄 Change Requests
-    </a>
-
-    <a href="approval.html" id="approvalLink">
-        ✓ Approvals
-    </a>
-
-    <a href="versions.html">
-        🚀 Versions
-    </a>
-
-    <a href="releaseNotes.html">
-        📄 Release Notes
-    </a>
-
-    <a href="reports.html">
-        📊 Reports
-    </a>
-
-    <a href="auditLogs.html">
-        📋 Audit Logs
-    </a>
-
-</nav>
+            <a href="dashboard.html" data-page="dashboard"><span class="nav-label">Dashboard</span></a>
+            <a href="projects.html" data-page="projects"><span class="nav-label">Projects</span></a>
+            <a href="modules.html" data-page="modules"><span class="nav-label">Modules</span></a>
+            <a href="changeRequests.html" data-page="changeRequests"><span class="nav-label">Change Requests</span></a>
+            <a href="approval.html" id="approvalLink" data-page="approvals"><span class="nav-label">Approvals</span></a>
+            <a href="versions.html" class="active" data-page="versions"><span class="nav-label">Versions</span></a>
+            <a href="releaseNotes.html" data-page="releaseNotes"><span class="nav-label">Release Notes</span></a>
+            <a href="reports.html" data-page="reports"><span class="nav-label">Reports</span></a>
+            <a href="auditLogs.html" data-page="auditLogs"><span class="nav-label">Audit Logs</span></a>
+            <a href="search.html" data-page="search"><span class="nav-label">Search</span></a>
+        </nav>
 
         <div class="sidebar-user">
             <strong id="sidebarUserName">User</strong>
             <span id="sidebarUserRole">Role</span>
         </div>
-
     </aside>
 
-
+    <!-- MAIN CONTENT -->
     <main class="main-content">
-
         <header class="topbar">
-
             <div>
                 <h1>Version Management</h1>
-                <p>View software versions and release notes</p>
+                <p>View software versions, compare changes, and explore release history</p>
             </div>
-
         </header>
 
-
+        <!-- SOFTWARE VERSIONS TABLE -->
         <section class="dashboard-section">
-
             <div class="section-header">
-
                 <h2>Software Versions</h2>
-
-                <span id="versionCount">
-                    0 Versions
-                </span>
-
+                <span id="versionCount">0 Versions</span>
             </div>
 
-
             <div class="table-container">
-
                 <table>
-
                     <thead>
-
                         <tr>
                             <th>ID</th>
                             <th>Project</th>
@@ -104,28 +60,20 @@
                             <th>Description</th>
                             <th>Release Date</th>
                         </tr>
-
                     </thead>
-
                     <tbody id="versionsTable">
-
                         <tr>
                             <td colspan="5">
                                 Loading...
                             </td>
                         </tr>
-
                     </tbody>
-
                 </table>
-
             </div>
-
         </section>
 
-
+        <!-- COMPARE VERSIONS -->
         <section class="dashboard-section">
-
             <div class="section-header">
                 <h2>Compare Versions</h2>
             </div>
@@ -147,35 +95,22 @@
             <div id="versionComparison" class="version-comparison-status">
                 Select two versions to compare their release details.
             </div>
-
         </section>
 
-
-        <!-- RELEASE NOTES -->
-
+        <!-- RELEASE NOTES PREVIEW -->
         <section class="dashboard-section">
-
             <div class="section-header">
-
                 <h2>Release Notes</h2>
-
             </div>
-
 
             <div id="releaseNotesContainer">
-
                 <p>Loading release notes...</p>
-
             </div>
-
         </section>
-
     </main>
 
-
-    <script src="../js/versions.js"></script>
+    <script src="../js/icons.js"></script>
     <script src="../js/sidebar.js"></script>
-    <a href="versions.html">🚀 Versions</a>
+    <script src="../js/versions.js"></script>
 </body>
-
 </html>

@@ -436,13 +436,17 @@ async function loadRequests() {
 
 
             if (request.attachment) {
+                const clipIcon = typeof window.renderIcon === "function"
+                    ? window.renderIcon("paperclip", "attachment-icon", 14)
+                    : `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="display:inline-block;vertical-align:middle;margin-right:4px;"><path d="m21.44 11.05-9.19 9.19a6 6 0 0 1-8.49-8.49l8.57-8.57A4 4 0 1 1 18 8.84l-8.59 8.57a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg>`;
 
                 attachmentHTML = `
                     <a
                         href="/uploads/${request.attachment}"
                         target="_blank"
+                        class="attachment-link"
                     >
-                        📎 View File
+                        ${clipIcon}<span>View File</span>
                     </a>
                 `;
 

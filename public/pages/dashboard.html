@@ -1,188 +1,104 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
     <title>ConfigFlow - Dashboard</title>
-
     <link rel="stylesheet" href="../css/style.css">
 </head>
-
 <body>
 
     <!-- SIDEBAR -->
-
     <aside class="sidebar">
-
         <div class="logo">
-            ⚙️ ConfigFlow
+            <span class="logo-mark">CF</span>
+            <span class="logo-text">ConfigFlow</span>
         </div>
 
-<nav>
-
-    <a href="dashboard.html" class="active">
-        🏠 Dashboard
-    </a>
-
-    <a href="projects.html">
-        📁 Projects
-    </a>
-
-    <a href="modules.html">
-        ▦ Modules
-    </a>
-
-    <a href="changeRequests.html">
-        🔄 Change Requests
-    </a>
-
-    <a href="approval.html" id="approvalLink">
-        ✓ Approvals
-    </a>
-
-    <a href="versions.html">
-        🚀 Versions
-    </a>
-
-    <a href="releaseNotes.html">
-        📄 Release Notes
-    </a>
-
-    <a href="reports.html">
-        📊 Reports
-    </a>
-
-    <a href="auditLogs.html">
-        📋 Audit Logs
-    </a>
-
-</nav>
+        <nav>
+            <a href="dashboard.html" class="active" data-page="dashboard"><span class="nav-label">Dashboard</span></a>
+            <a href="projects.html" data-page="projects"><span class="nav-label">Projects</span></a>
+            <a href="modules.html" data-page="modules"><span class="nav-label">Modules</span></a>
+            <a href="changeRequests.html" data-page="changeRequests"><span class="nav-label">Change Requests</span></a>
+            <a href="approval.html" id="approvalLink" data-page="approvals"><span class="nav-label">Approvals</span></a>
+            <a href="versions.html" data-page="versions"><span class="nav-label">Versions</span></a>
+            <a href="releaseNotes.html" data-page="releaseNotes"><span class="nav-label">Release Notes</span></a>
+            <a href="reports.html" data-page="reports"><span class="nav-label">Reports</span></a>
+            <a href="auditLogs.html" data-page="auditLogs"><span class="nav-label">Audit Logs</span></a>
+            <a href="search.html" data-page="search"><span class="nav-label">Search</span></a>
+        </nav>
 
         <div class="sidebar-user">
-
             <strong id="sidebarUserName">User</strong>
-
             <span id="sidebarUserRole">Role</span>
-
         </div>
-
     </aside>
 
-
     <!-- MAIN CONTENT -->
-
     <main class="main-content">
-
         <!-- HEADER -->
-
         <header class="topbar">
-
             <div>
                 <h1>Dashboard</h1>
-
-                <p id="welcomeMessage">
-                    Welcome back!
-                </p>
+                <p id="welcomeMessage">Welcome back!</p>
             </div>
-
-            <button onclick="logout()" class="logout-btn">
+            <button type="button" onclick="logout()" class="logout-btn">
                 Logout
             </button>
-
         </header>
 
-
-        <!-- STATISTICS -->
-
-        <section class="stats-grid">
-
+        <!-- STATISTICS GRID -->
+        <section class="stats-grid" aria-label="System Metrics">
             <div class="stat-card">
-
-                <div class="stat-icon">
-                    📁
-                </div>
-
+                <div class="stat-icon" data-icon="projects"></div>
                 <div>
                     <h3>Total Projects</h3>
                     <strong id="totalProjects">0</strong>
                 </div>
-
             </div>
 
-
             <div class="stat-card">
-
-                <div class="stat-icon">
-                    👥
-                </div>
-
+                <div class="stat-icon" data-icon="users"></div>
                 <div>
                     <h3>Total Developers</h3>
                     <strong id="totalDevelopers">0</strong>
                 </div>
-
             </div>
 
-
             <div class="stat-card">
-
-                <div class="stat-icon">
-                    ⏳
-                </div>
-
+                <div class="stat-icon" data-icon="clock"></div>
                 <div>
                     <h3>Pending Requests</h3>
                     <strong id="pendingRequests">0</strong>
                 </div>
-
             </div>
 
-
             <div class="stat-card">
-
-                <div class="stat-icon">
-                    ✓
-                </div>
-
+                <div class="stat-icon" data-icon="check-circle"></div>
                 <div>
                     <h3>Approved Requests</h3>
                     <strong id="approvedRequests">0</strong>
                 </div>
-
             </div>
 
-
             <div class="stat-card">
-
-                <div class="stat-icon">
-                    ✕
-                </div>
-
+                <div class="stat-icon" data-icon="x-circle"></div>
                 <div>
                     <h3>Rejected Requests</h3>
                     <strong id="rejectedRequests">0</strong>
                 </div>
-
             </div>
 
-
             <div class="stat-card">
-
-                <div class="stat-icon">
-                    🚀
-                </div>
-
+                <div class="stat-icon" data-icon="versions"></div>
                 <div>
                     <h3>Latest Version</h3>
                     <strong id="latestVersion">-</strong>
                 </div>
-
             </div>
-
         </section>
 
+        <!-- REQUEST OVERVIEW PROGRESS BARS -->
         <section class="dashboard-section">
             <div class="section-header">
                 <h2>Request Overview</h2>
@@ -206,6 +122,7 @@
             </div>
         </section>
 
+        <!-- NOTIFICATIONS -->
         <section class="dashboard-section dashboard-notifications">
             <div class="section-header">
                 <h2>Notifications</h2>
@@ -213,6 +130,7 @@
             <p id="dashboardNotification">Checking for updates...</p>
         </section>
 
+        <!-- BACKUP AND RESTORE (ADMIN ONLY) -->
         <section class="dashboard-section" id="backupSection" hidden>
             <div class="section-header">
                 <h2>Backup and Restore</h2>
@@ -229,102 +147,57 @@
             <p id="backupMessage"></p>
         </section>
 
-
         <!-- RECENT CHANGE REQUESTS -->
-
         <section class="dashboard-section">
-
             <div class="section-header">
-
                 <h2>Recent Change Requests</h2>
-
-                <a href="changeRequests.html">
-                    View All
-                </a>
-
+                <a href="changeRequests.html">View All</a>
             </div>
-
             <div class="table-container">
-
                 <table>
-
                     <thead>
-
                         <tr>
                             <th>Title</th>
                             <th>Project</th>
                             <th>Priority</th>
                             <th>Status</th>
                         </tr>
-
                     </thead>
-
                     <tbody id="recentRequests">
-
                         <tr>
-                            <td colspan="4">
-                                Loading...
-                            </td>
+                            <td colspan="4">Loading...</td>
                         </tr>
-
                     </tbody>
-
                 </table>
-
             </div>
-
         </section>
 
-
         <!-- PROJECT SUMMARY -->
-
         <section class="dashboard-section">
-
             <div class="section-header">
-
                 <h2>Project Summary</h2>
-
-                <a href="projects.html">
-                    View All Projects
-                </a>
-
+                <a href="projects.html">View All Projects</a>
             </div>
-
             <div class="table-container">
-
                 <table>
-
                     <thead>
-
                         <tr>
                             <th>Project</th>
                             <th>Current Version</th>
                         </tr>
-
                     </thead>
-
                     <tbody id="projectSummary">
-
                         <tr>
-                            <td colspan="2">
-                                Loading...
-                            </td>
+                            <td colspan="2">Loading...</td>
                         </tr>
-
                     </tbody>
-
                 </table>
-
             </div>
-
         </section>
-
     </main>
 
-
+    <script src="../js/icons.js"></script>
     <script src="../js/sidebar.js"></script>
     <script src="../js/dashboard.js"></script>
-
 </body>
-
 </html>

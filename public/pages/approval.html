@@ -1,238 +1,120 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
     <title>ConfigFlow - Approvals</title>
-
     <link rel="stylesheet" href="../css/style.css">
 </head>
-
 <body>
 
+    <!-- SIDEBAR -->
     <aside class="sidebar">
-
         <div class="logo">
-            ⚙️ ConfigFlow
+            <span class="logo-mark">CF</span>
+            <span class="logo-text">ConfigFlow</span>
         </div>
 
         <nav>
-
-    <a href="dashboard.html">
-        🏠 Dashboard
-    </a>
-
-    <a href="projects.html">
-        📁 Projects
-    </a>
-
-    <a href="modules.html">
-        ▦ Modules
-    </a>
-
-    <a href="changeRequests.html">
-        🔄 Change Requests
-    </a>
-
-    <a href="approval.html" id="approvalLink">
-        ✓ Approvals
-    </a>
-
-    <a href="versions.html">
-        🚀 Versions
-    </a>
-
-    <a href="releaseNotes.html">
-        📄 Release Notes
-    </a>
-
-    <a href="reports.html">
-        📊 Reports
-    </a>
-
-    <a href="auditLogs.html">
-        📋 Audit Logs
-    </a>
-
-</nav>
+            <a href="dashboard.html" data-page="dashboard"><span class="nav-label">Dashboard</span></a>
+            <a href="projects.html" data-page="projects"><span class="nav-label">Projects</span></a>
+            <a href="modules.html" data-page="modules"><span class="nav-label">Modules</span></a>
+            <a href="changeRequests.html" data-page="changeRequests"><span class="nav-label">Change Requests</span></a>
+            <a href="approval.html" id="approvalLink" class="active" data-page="approvals"><span class="nav-label">Approvals</span></a>
+            <a href="versions.html" data-page="versions"><span class="nav-label">Versions</span></a>
+            <a href="releaseNotes.html" data-page="releaseNotes"><span class="nav-label">Release Notes</span></a>
+            <a href="reports.html" data-page="reports"><span class="nav-label">Reports</span></a>
+            <a href="auditLogs.html" data-page="auditLogs"><span class="nav-label">Audit Logs</span></a>
+            <a href="search.html" data-page="search"><span class="nav-label">Search</span></a>
+        </nav>
 
         <div class="sidebar-user">
-
             <strong id="sidebarUserName">User</strong>
-
             <span id="sidebarUserRole">Role</span>
-
         </div>
-
     </aside>
 
-
+    <!-- MAIN CONTENT -->
     <main class="main-content">
-
         <header class="topbar">
-
             <div>
-
                 <h1>Approvals</h1>
-
-                <p>
-                    Review and manage change requests
-                </p>
-
+                <p>Review and manage change requests</p>
             </div>
-
         </header>
 
-
-        <!-- REQUEST DETAILS -->
-
-        <section
-            class="form-section"
-            id="approvalSection"
-        >
-
-            <h2>Review Change Request</h2>
-
-            <input
-                type="hidden"
-                id="requestId"
-            >
-
-
-            <p>
-                <strong>Title:</strong>
-                <span id="requestTitle">-</span>
-            </p>
-
-
-            <p>
-                <strong>Project:</strong>
-                <span id="requestProject">-</span>
-            </p>
-
-
-            <p>
-                <strong>Module:</strong>
-                <span id="requestModule">-</span>
-            </p>
-
-
-            <p>
-                <strong>Priority:</strong>
-                <span id="requestPriority">-</span>
-            </p>
-
-
-            <p>
-                <strong>Description:</strong>
-            </p>
-
-            <p id="requestDescription">
-                -
-            </p>
-
-
-            <label>Admin Comment</label>
-
-            <textarea
-                id="adminComment"
-                placeholder="Enter approval/rejection comment..."
-            ></textarea>
-
-
-            <button
-                class="approve-btn"
-                onclick="approveRequest()"
-            >
-                ✓ Approve
-            </button>
-
-
-            <button
-                class="reject-btn"
-                onclick="rejectRequest()"
-            >
-                ✕ Reject
-            </button>
-
-
-            <button
-                class="cancel-btn"
-                onclick="closeApprovalForm()"
-            >
-                Cancel
-            </button>
-
-        </section>
-
-
-        <!-- PENDING REQUESTS -->
-
-        <section class="dashboard-section">
-
+        <!-- REQUEST DETAILS / REVIEW FORM -->
+        <section class="form-section" id="approvalSection" style="display: none;">
             <div class="section-header">
-
-                <h2>Pending Change Requests</h2>
-
-                <span id="pendingCount">
-                    0 Pending
-                </span>
-
+                <h2>Review Change Request</h2>
             </div>
 
+            <input type="hidden" id="requestId">
+
+            <div class="form-group">
+                <p><strong>Title:</strong> <span id="requestTitle">-</span></p>
+                <p><strong>Project:</strong> <span id="requestProject">-</span></p>
+                <p><strong>Module:</strong> <span id="requestModule">-</span></p>
+                <p><strong>Priority:</strong> <span id="requestPriority">-</span></p>
+                <p><strong>Description:</strong></p>
+                <p id="requestDescription">-</p>
+            </div>
+
+            <div class="form-group">
+                <label for="adminComment">Admin Comment</label>
+                <textarea
+                    id="adminComment"
+                    placeholder="Enter approval/rejection comment..."
+                ></textarea>
+            </div>
+
+            <div class="form-actions">
+                <button type="button" class="approve-btn" onclick="approveRequest()">
+                    Approve
+                </button>
+                <button type="button" class="reject-btn" onclick="rejectRequest()">
+                    Reject
+                </button>
+                <button type="button" class="cancel-btn" onclick="closeApprovalForm()">
+                    Cancel
+                </button>
+            </div>
+        </section>
+
+        <!-- PENDING REQUESTS TABLE -->
+        <section class="dashboard-section">
+            <div class="section-header">
+                <h2>Pending Change Requests</h2>
+                <span id="pendingCount">0 Pending</span>
+            </div>
 
             <div class="table-container">
-
                 <table>
-
                     <thead>
-
                         <tr>
-
                             <th>ID</th>
-
                             <th>Title</th>
-
                             <th>Project</th>
-
                             <th>Module</th>
-
                             <th>Priority</th>
-
                             <th>Submitted By</th>
-
                             <th>Action</th>
-
                         </tr>
-
                     </thead>
-
-
                     <tbody id="pendingRequestsTable">
-
                         <tr>
-
                             <td colspan="7">
                                 Loading...
                             </td>
-
                         </tr>
-
                     </tbody>
-
                 </table>
-
             </div>
-
         </section>
-
     </main>
 
-
-    <script src="../js/approval.js"></script>
+    <script src="../js/icons.js"></script>
     <script src="../js/sidebar.js"></script>
+    <script src="../js/approval.js"></script>
 </body>
-
 </html>

@@ -1,181 +1,117 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
     <title>ConfigFlow - Modules</title>
-
     <link rel="stylesheet" href="../css/style.css">
 </head>
-
 <body>
 
+    <!-- SIDEBAR -->
     <aside class="sidebar">
-
         <div class="logo">
-            ⚙️ ConfigFlow
+            <span class="logo-mark">CF</span>
+            <span class="logo-text">ConfigFlow</span>
         </div>
 
         <nav>
-
-    <a href="dashboard.html">
-        🏠 Dashboard
-    </a>
-
-    <a href="projects.html">
-        📁 Projects
-    </a>
-
-    <a href="modules.html">
-        ▦ Modules
-    </a>
-
-    <a href="changeRequests.html">
-        🔄 Change Requests
-    </a>
-
-    <a href="approval.html" id="approvalLink">
-        ✓ Approvals
-    </a>
-
-    <a href="versions.html">
-        🚀 Versions
-    </a>
-
-    <a href="releaseNotes.html">
-        📄 Release Notes
-    </a>
-
-    <a href="reports.html">
-        📊 Reports
-    </a>
-
-    <a href="auditLogs.html">
-        📋 Audit Logs
-    </a>
-
-</nav>
+            <a href="dashboard.html" data-page="dashboard"><span class="nav-label">Dashboard</span></a>
+            <a href="projects.html" data-page="projects"><span class="nav-label">Projects</span></a>
+            <a href="modules.html" class="active" data-page="modules"><span class="nav-label">Modules</span></a>
+            <a href="changeRequests.html" data-page="changeRequests"><span class="nav-label">Change Requests</span></a>
+            <a href="approval.html" id="approvalLink" data-page="approvals"><span class="nav-label">Approvals</span></a>
+            <a href="versions.html" data-page="versions"><span class="nav-label">Versions</span></a>
+            <a href="releaseNotes.html" data-page="releaseNotes"><span class="nav-label">Release Notes</span></a>
+            <a href="reports.html" data-page="reports"><span class="nav-label">Reports</span></a>
+            <a href="auditLogs.html" data-page="auditLogs"><span class="nav-label">Audit Logs</span></a>
+            <a href="search.html" data-page="search"><span class="nav-label">Search</span></a>
+        </nav>
 
         <div class="sidebar-user">
             <strong id="sidebarUserName">User</strong>
             <span id="sidebarUserRole">Role</span>
         </div>
-
     </aside>
 
-
+    <!-- MAIN CONTENT -->
     <main class="main-content">
-
         <header class="topbar">
-
             <div>
                 <h1>Modules</h1>
                 <p>Manage modules inside your software projects</p>
             </div>
 
-            <button class="add-btn" onclick="openModuleForm()">
+            <button type="button" class="add-btn" onclick="openModuleForm()">
                 + Add Module
             </button>
-
         </header>
 
-
         <!-- MODULE FORM -->
-
-        <section class="form-section" id="moduleFormSection">
-
-            <h2 id="formTitle">Add Module</h2>
+        <section class="form-section" id="moduleFormSection" style="display: none;">
+            <div class="section-header">
+                <h2 id="formTitle">Add Module</h2>
+            </div>
 
             <input type="hidden" id="moduleId">
 
-
-            <label>Project</label>
-
-            <select id="projectId">
-
-                <option value="">
-                    Select Project
-                </option>
-
-            </select>
-
-
-            <label>Module Name</label>
-
-            <input
-                type="text"
-                id="moduleName"
-                placeholder="Example: Login"
-            >
-
-
-            <button onclick="saveModule()">
-                Save Module
-            </button>
-
-            <button
-                class="cancel-btn"
-                onclick="closeModuleForm()"
-            >
-                Cancel
-            </button>
-
-        </section>
-
-
-        <!-- MODULE TABLE -->
-
-        <section class="dashboard-section">
-
-            <div class="section-header">
-
-                <h2>All Modules</h2>
-
-                <span id="moduleCount">
-                    0 Modules
-                </span>
-
+            <div class="form-group">
+                <label for="projectId">Project</label>
+                <select id="projectId">
+                    <option value="">Select Project</option>
+                </select>
             </div>
 
+            <div class="form-group">
+                <label for="moduleName">Module Name</label>
+                <input
+                    type="text"
+                    id="moduleName"
+                    placeholder="Example: Login"
+                >
+            </div>
+
+            <div class="form-actions">
+                <button type="button" class="add-btn" onclick="saveModule()">
+                    Save Module
+                </button>
+                <button type="button" class="cancel-btn" onclick="closeModuleForm()">
+                    Cancel
+                </button>
+            </div>
+        </section>
+
+        <!-- MODULE TABLE -->
+        <section class="dashboard-section">
+            <div class="section-header">
+                <h2>All Modules</h2>
+                <span id="moduleCount">0 Modules</span>
+            </div>
 
             <div class="table-container">
-
                 <table>
-
                     <thead>
-
                         <tr>
                             <th>ID</th>
                             <th>Project</th>
                             <th>Module</th>
                             <th>Actions</th>
                         </tr>
-
                     </thead>
-
                     <tbody id="modulesTable">
-
                         <tr>
                             <td colspan="4">
                                 Loading...
                             </td>
                         </tr>
-
                     </tbody>
-
                 </table>
-
             </div>
-
         </section>
-
     </main>
 
-
-    <script src="../js/modules.js"></script>
+    <script src="../js/icons.js"></script>
     <script src="../js/sidebar.js"></script>
+    <script src="../js/modules.js"></script>
 </body>
-
 </html>
