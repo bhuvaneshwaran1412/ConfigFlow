@@ -1,9 +1,7 @@
 const storedUser = localStorage.getItem("user");
 
 if (!storedUser) {
-
     window.location.href = "login.html";
-
 }
 
 const user = JSON.parse(storedUser);
@@ -14,6 +12,17 @@ document.getElementById("sidebarUserName").textContent =
 document.getElementById("sidebarUserRole").textContent =
     user.role || "User";
 
+let allModulesCache = [];
+
+function escapeHtml(str) {
+    if (!str) return "";
+    return String(str)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+}
 
 // =================================
 // LOAD PROJECTS INTO DROPDOWN
@@ -59,6 +68,37 @@ async function loadProjects() {
 
 }
 
+// Update dependency dropdown when project changes
+document.getElementById("projectId")?.addEventListener("change", updateDependencyOptions);
+
+function updateDependencyOptions(currentModuleId = null, selectedIds = []) {
+    const projectId = document.getElementById("projectId").value;
+    const depSelect = document.getElementById("moduleDependencies");
+    if (!depSelect) return;
+
+    depSelect.innerHTML = "";
+
+    const filtered = allModulesCache.filter(m =>
+        String(m.project_id) === String(projectId) &&
+        String(m.id) !== String(currentModuleId)
+    );
+
+    if (filtered.length === 0) {
+        depSelect.innerHTML = `<option value="" disabled>No other modules in this project</option>`;
+        return;
+    }
+
+    filtered.forEach(m => {
+        const opt = document.createElement("option");
+        opt.value = m.id;
+        opt.textContent = m.module_name;
+        if (selectedIds.includes(String(m.id)) || selectedIds.includes(Number(m.id))) {
+            opt.selected = true;
+        }
+        depSelect.appendChild(opt);
+    });
+}
+
 
 // =================================
 // LOAD MODULES
@@ -71,6 +111,7 @@ async function loadModules() {
         const response = await fetch(`/api/modules?user_id=${encodeURIComponent(user.id)}`);
 
         const modules = await response.json();
+        allModulesCache = Array.isArray(modules) ? modules : [];
 
         const table =
             document.getElementById("modulesTable");
@@ -85,12 +126,13 @@ async function loadModules() {
 
             table.innerHTML = `
                 <tr>
-                    <td colspan="4">
+                    <td colspan="6">
                         No modules found
                     </td>
                 </tr>
             `;
 
+            renderDependencyMap([]);
             return;
 
         }
@@ -106,6 +148,15 @@ async function loadModules() {
                     <button class="delete-btn" onclick="deleteModule(${module.id})">Delete</button>
                 `
                 : "View only";
+
+            const dependsOn = module.depends_on_names
+                ? `<span class="role-badge developer" style="font-size: 11px;">${escapeHtml(module.depends_on_names)}</span>`
+                : `<span style="color: var(--text-muted); font-size: 12px;">None (Root)</span>`;
+
+            const downstreamCount = Number(module.downstream_dependent_count || 0);
+            const impactBadge = downstreamCount > 0
+                ? `<span class="role-badge manager" style="font-size: 11px;">⚠️ ${downstreamCount} downstream</span>`
+                : `<span style="color: var(--text-muted); font-size: 12px;">0 dependents</span>`;
 
             row.innerHTML = `
 
@@ -124,6 +175,14 @@ async function loadModules() {
                 </td>
 
                 <td>
+                    ${dependsOn}
+                </td>
+
+                <td>
+                    ${impactBadge}
+                </td>
+
+                <td>
 
                     ${actions}
 
@@ -135,6 +194,8 @@ async function loadModules() {
 
         });
 
+        renderDependencyMap(allModulesCache);
+
     }
 
     catch (error) {
@@ -143,6 +204,55 @@ async function loadModules() {
 
     }
 
+}
+
+
+// =================================
+// RENDER DEPENDENCY MAP
+// =================================
+
+async function renderDependencyMap(modules) {
+    const container = document.getElementById("dependencyMapContainer");
+    if (!container) return;
+
+    if (!modules || modules.length === 0) {
+        container.innerHTML = `<div style="color: var(--text-muted); font-size: 12px; padding: 20px;">No modules defined yet.</div>`;
+        return;
+    }
+
+    container.innerHTML = "";
+
+    modules.forEach(m => {
+        const card = document.createElement("div");
+        card.className = "chart-card";
+        card.style.padding = "16px";
+
+        const downstreamCount = Number(m.downstream_dependent_count || 0);
+        const dependsOnList = m.depends_on_names
+            ? m.depends_on_names.split(", ")
+            : [];
+
+        let upstreamBadges = dependsOnList.length > 0
+            ? dependsOnList.map(name => `<span class="role-badge developer">${escapeHtml(name)}</span>`).join(" ")
+            : `<span style="color: var(--text-muted); font-size: 11px;">None (Standalone / Core)</span>`;
+
+        card.innerHTML = `
+            <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px;">
+                <div>
+                    <h4 style="margin: 0; font-size: 13px; color: var(--text-primary); font-weight: 600;">${escapeHtml(m.module_name)}</h4>
+                    <span style="font-size: 11px; color: var(--text-muted);">${escapeHtml(m.project_name || "General")}</span>
+                </div>
+                ${downstreamCount > 0 ? `<span class="role-badge manager" title="${downstreamCount} modules depend on this">${downstreamCount} Impacted</span>` : `<span class="role-badge" style="background: rgba(255,255,255,0.05); color: var(--text-muted);">0 Downstream</span>`}
+            </div>
+
+            <div style="font-size: 11px; color: var(--text-secondary); margin-top: 8px;">
+                <div style="margin-bottom: 4px;"><strong style="color: var(--text-muted);">Depends On:</strong></div>
+                <div>${upstreamBadges}</div>
+            </div>
+        `;
+
+        container.appendChild(card);
+    });
 }
 
 
@@ -157,6 +267,8 @@ function openModuleForm() {
 
     document.getElementById("formTitle")
         .textContent = "Add Module";
+
+    updateDependencyOptions();
 
 }
 
@@ -176,6 +288,9 @@ function closeModuleForm() {
 
     document.getElementById("moduleName").value = "";
 
+    const depSelect = document.getElementById("moduleDependencies");
+    if (depSelect) depSelect.innerHTML = "";
+
 }
 
 
@@ -193,6 +308,9 @@ async function saveModule() {
 
     const module_name =
         document.getElementById("moduleName").value;
+
+    const depSelect = document.getElementById("moduleDependencies");
+    const selectedOptions = depSelect ? Array.from(depSelect.selectedOptions).map(opt => Number(opt.value)) : [];
 
 
     if (!project_id) {
@@ -217,6 +335,7 @@ async function saveModule() {
 
         project_id,
         module_name,
+        depends_on_ids: selectedOptions,
         created_by: user.id,
         updated_by: user.id
 
@@ -320,6 +439,12 @@ function editModule(module) {
 
     document.getElementById("moduleName").value =
         module.module_name;
+
+    const existingDepIds = module.depends_on_ids
+        ? String(module.depends_on_ids).split(",")
+        : [];
+
+    updateDependencyOptions(module.id, existingDepIds);
 
 }
 

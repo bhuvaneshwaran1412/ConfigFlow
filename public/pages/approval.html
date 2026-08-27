@@ -55,12 +55,29 @@
                 <p><strong>Title:</strong> <span id="requestTitle">-</span></p>
                 <p><strong>Project:</strong> <span id="requestProject">-</span></p>
                 <p><strong>Module:</strong> <span id="requestModule">-</span></p>
+                <p><strong>Impact (SemVer):</strong> <span id="requestChangeType" class="role-badge developer">Patch</span></p>
+                <p><strong>Target Release Version:</strong> <span id="requestNextVersion" style="font-family: var(--font-mono); color: var(--success-fg); font-weight: 600;">-</span></p>
                 <p><strong>Priority:</strong> <span id="requestPriority">-</span></p>
                 <p><strong>Description:</strong></p>
                 <p id="requestDescription">-</p>
+                <div id="approvalImpactAlert" style="display: none; margin-top: 10px; padding: 10px 14px; border-radius: 6px; background: rgba(245, 158, 11, 0.1); border: 1px solid rgba(245, 158, 11, 0.2);">
+                    <strong style="color: var(--warning-fg); font-size: 12px;">⚠️ Downstream Ripple Effect Notice:</strong>
+                    <p id="approvalImpactText" style="margin: 4px 0 0 0; font-size: 11px; color: var(--text-secondary);"></p>
+                </div>
             </div>
 
-            <div class="form-group">
+            <div class="approval-comments-section">
+                <label><strong>Team Discussion & Feedback:</strong></label>
+                <div id="approvalCommentsList" class="approval-comments-list">
+                    <div class="comment-empty-state">No comments yet.</div>
+                </div>
+                <div style="display: flex; gap: 8px; margin-top: 8px;">
+                    <input type="text" id="approvalNewComment" class="comments-textarea" style="min-height: auto; height: 36px; padding: 6px 10px;" placeholder="Reply or ask developer for clarification...">
+                    <button type="button" class="add-btn" onclick="postApprovalComment()" style="white-space: nowrap; padding: 6px 12px; font-size: 12px;">Reply</button>
+                </div>
+            </div>
+
+            <div class="form-group" style="margin-top: 16px;">
                 <label for="adminComment">Admin Comment</label>
                 <textarea
                     id="adminComment"
@@ -70,7 +87,7 @@
 
             <div class="form-actions">
                 <button type="button" class="approve-btn" onclick="approveRequest()">
-                    Approve
+                    Approve & Bump Version
                 </button>
                 <button type="button" class="reject-btn" onclick="rejectRequest()">
                     Reject
@@ -96,6 +113,7 @@
                             <th>Title</th>
                             <th>Project</th>
                             <th>Module</th>
+                            <th>Impact</th>
                             <th>Priority</th>
                             <th>Submitted By</th>
                             <th>Action</th>
@@ -103,7 +121,7 @@
                     </thead>
                     <tbody id="pendingRequestsTable">
                         <tr>
-                            <td colspan="7">
+                            <td colspan="8">
                                 Loading...
                             </td>
                         </tr>

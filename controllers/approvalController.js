@@ -1,5 +1,6 @@
 const db = require("../config/db");
 const { writeAuditLog } = require("../utils/auditLog");
+const { bumpSemVer, generateChangelog } = require("../utils/semver");
 
 const approveRequest = (req, res) => {
 
@@ -39,7 +40,7 @@ const approveRequest = (req, res) => {
     // =========================================
 
     const userSql = `
-        SELECT u.id, u.role, cr.project_id, p.project_manager_id
+        SELECT u.id, u.name, u.role, cr.project_id, p.project_manager_id
         FROM users u
         JOIN change_requests cr ON cr.id=?
         JOIN projects p ON p.id=cr.project_id
@@ -142,13 +143,19 @@ const approveRequest = (req, res) => {
 
 
                     // =========================================
-                    // GET CHANGE REQUEST
+                    // GET CHANGE REQUEST DETAILS WITH PROJECT INFO
                     // =========================================
 
                     const getSql = `
-                        SELECT *
-                        FROM change_requests
-                        WHERE id=?
+                        SELECT
+                            cr.*,
+                            p.project_name,
+                            p.current_version,
+                            m.module_name
+                        FROM change_requests cr
+                        JOIN projects p ON cr.project_id = p.id
+                        JOIN modules m ON cr.module_id = m.id
+                        WHERE cr.id=?
                     `;
 
 
@@ -178,11 +185,12 @@ const approveRequest = (req, res) => {
 
 
                             // =========================================
-                            // CREATE VERSION
+                            // CALCULATE NEXT SEMVER VERSION
                             // =========================================
 
-                            const version =
-                                "v" + Date.now();
+                            const currentVer = request.current_version || "v1.0.0";
+                            const changeType = request.change_type || "Patch";
+                            const version = bumpSemVer(currentVer, changeType);
 
 
                             const versionSql = `
@@ -194,7 +202,7 @@ const approveRequest = (req, res) => {
                                     release_date,
                                     created_by
                                 )
-                                VALUES (?,?,?,?,?)
+                                VALUES (?,?,?,NOW(),?)
                             `;
 
 
@@ -204,7 +212,6 @@ const approveRequest = (req, res) => {
                                     request.project_id,
                                     version,
                                     request.title,
-                                    new Date(),
                                     req.user.id
                                 ],
                                 (err, versionResult) => {
@@ -221,8 +228,14 @@ const approveRequest = (req, res) => {
 
 
                                     // =========================================
-                                    // CREATE RELEASE NOTE
+                                    // CREATE STRUCTURED RELEASE NOTE
                                     // =========================================
+
+                                    const formattedNotes = generateChangelog(
+                                        request,
+                                        version,
+                                        user.name || "Reviewer"
+                                    );
 
                                     const releaseSql = `
                                         INSERT INTO release_notes
@@ -238,7 +251,7 @@ const approveRequest = (req, res) => {
                                         releaseSql,
                                         [
                                             versionId,
-                                            request.description
+                                            formattedNotes
                                         ],
                                         (err) => {
 
@@ -248,50 +261,68 @@ const approveRequest = (req, res) => {
 
                                             }
 
-
                                             // =========================================
-                                            // AUDIT LOG
+                                            // UPDATE PROJECT CURRENT VERSION
                                             // =========================================
-
-                                            const auditSql = `
-                                                INSERT INTO audit_logs
-                                                (
-                                                    user_id,
-                                                    action,
-                                                    details
-                                                )
-                                                VALUES (?,?,?)
+                                            const updateProjectSql = `
+                                                UPDATE projects
+                                                SET current_version = ?
+                                                WHERE id = ?
                                             `;
 
-
                                             db.query(
-                                                auditSql,
-                                                [
-                                                    req.user.id,
-                                                    "Approved Change Request",
-                                                    request.title
-                                                ],
-                                                (err) => {
-
-                                                    if (err) {
-
-                                                        return res.status(500).json(err);
-
+                                                updateProjectSql,
+                                                [version, request.project_id],
+                                                (updateProjectErr) => {
+                                                    if (updateProjectErr) {
+                                                        console.error("Failed to update project current_version:", updateProjectErr);
                                                     }
 
+                                                    // =========================================
+                                                    // AUDIT LOG
+                                                    // =========================================
 
-                                                    res.json({
+                                                    const auditSql = `
+                                                        INSERT INTO audit_logs
+                                                        (
+                                                            user_id,
+                                                            action,
+                                                            details
+                                                        )
+                                                        VALUES (?,?,?)
+                                                    `;
 
-                                                        success: true,
 
-                                                        message:
-                                                            "Request Approved Successfully",
+                                                    db.query(
+                                                        auditSql,
+                                                        [
+                                                            req.user.id,
+                                                            "Approved Change Request",
+                                                            `${request.title} (Released ${version})`
+                                                        ],
+                                                        (err) => {
 
-                                                        version:
-                                                            version
+                                                            if (err) {
 
-                                                    });
+                                                                return res.status(500).json(err);
 
+                                                            }
+
+
+                                                            res.json({
+
+                                                                success: true,
+
+                                                                message:
+                                                                    "Request Approved Successfully",
+
+                                                                version:
+                                                                    version
+
+                                                            });
+
+                                                        }
+                                                    );
                                                 }
                                             );
 

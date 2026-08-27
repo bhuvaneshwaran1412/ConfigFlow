@@ -83,6 +83,40 @@ document
         loadModules
     );
 
+document
+    .getElementById("moduleId")
+    ?.addEventListener(
+        "change",
+        checkSelectedModuleImpact
+    );
+
+async function checkSelectedModuleImpact() {
+    const moduleId = document.getElementById("moduleId").value;
+    const alertEl = document.getElementById("moduleImpactAlert");
+    const textEl = document.getElementById("moduleImpactText");
+    if (!alertEl || !textEl) return;
+
+    if (!moduleId) {
+        alertEl.style.display = "none";
+        return;
+    }
+
+    try {
+        const response = await fetch(`/api/modules/${moduleId}/impact`);
+        const data = await response.json();
+
+        if (response.ok && data.has_downstream_impact && data.impacted_modules.length > 0) {
+            const names = data.impacted_modules.map(m => `"${m.module_name}"`).join(", ");
+            textEl.innerHTML = `Modifying this module may affect downstream dependent components: <strong>${names}</strong>. Please ensure test coverage.`;
+            alertEl.style.display = "block";
+        } else {
+            alertEl.style.display = "none";
+        }
+    } catch (e) {
+        alertEl.style.display = "none";
+    }
+}
+
 
 async function loadModules() {
 
@@ -205,6 +239,9 @@ function closeRequestForm() {
         "priority"
     ).value = "";
 
+    const changeTypeEl = document.getElementById("changeType");
+    if (changeTypeEl) changeTypeEl.value = "Patch";
+
     document.getElementById(
     "attachment"
     ).value = "";
@@ -234,6 +271,9 @@ async function submitRequest() {
 
     const priority =
         document.getElementById("priority").value;
+
+    const changeTypeEl = document.getElementById("changeType");
+    const change_type = changeTypeEl ? changeTypeEl.value : "Patch";
 
     const attachmentInput =
         document.getElementById("attachment");
@@ -298,6 +338,11 @@ async function submitRequest() {
     formData.append(
         "priority",
         priority
+    );
+
+    formData.append(
+        "change_type",
+        change_type
     );
 
     formData.append(
@@ -452,6 +497,10 @@ async function loadRequests() {
 
             }
 
+            const commentCount = Number(request.comment_count || 0);
+            const safeTitle = (request.title || "").replace(/'/g, "\\'").replace(/"/g, "&quot;");
+            const changeType = request.change_type || "Patch";
+            const changeTypeClass = changeType === "Major" ? "admin" : (changeType === "Minor" ? "manager" : "developer");
 
             row.innerHTML = `
 
@@ -474,6 +523,12 @@ async function loadRequests() {
                 </td>
 
                 <td>
+                    <span class="role-badge ${changeTypeClass}">
+                        ${changeType}
+                    </span>
+                </td>
+
+                <td>
                     ${request.priority || "-"}
                 </td>
 
@@ -481,6 +536,18 @@ async function loadRequests() {
                     <span class="status ${status.toLowerCase()}">
                         ${status}
                     </span>
+                </td>
+
+                <td>
+                    <button
+                        type="button"
+                        class="comment-badge-btn"
+                        onclick="openCommentsModal(${request.id}, '${safeTitle}')"
+                    >
+                        <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
+                        <span>Discuss</span>
+                        <span class="badge-count">${commentCount}</span>
+                    </button>
                 </td>
 
                 <td>
@@ -529,6 +596,178 @@ async function loadRequests() {
 
     }
 
+}
+
+
+// =================================
+// COMMENTS / DISCUSSION MODAL
+// =================================
+
+let activeRequestId = null;
+
+function escapeHtml(str) {
+    if (!str) return "";
+    return String(str)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+}
+
+function formatRelativeTime(dateString) {
+    if (!dateString) return "-";
+    const date = new Date(dateString);
+    const now = new Date();
+    const diffSeconds = Math.floor((now - date) / 1000);
+
+    if (diffSeconds < 60) return "Just now";
+    if (diffSeconds < 3600) return `${Math.floor(diffSeconds / 60)}m ago`;
+    if (diffSeconds < 86400) return `${Math.floor(diffSeconds / 3600)}h ago`;
+    return date.toLocaleDateString() + " " + date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+}
+
+async function openCommentsModal(requestId, requestTitle) {
+    activeRequestId = requestId;
+    document.getElementById("commentsModalTitle").textContent = `CR #${requestId}: ${requestTitle || "Discussion"}`;
+    document.getElementById("commentsModal").style.display = "flex";
+    document.getElementById("newCommentText").value = "";
+    await loadComments(requestId);
+}
+
+function closeCommentsModal() {
+    document.getElementById("commentsModal").style.display = "none";
+    activeRequestId = null;
+}
+
+async function loadComments(requestId) {
+    const list = document.getElementById("commentsList");
+    list.innerHTML = `<div class="comment-empty-state">Loading conversation...</div>`;
+
+    try {
+        const response = await fetch(`/api/change-requests/${requestId}/comments`);
+        const data = await response.json();
+
+        if (!response.ok || !data.success) {
+            list.innerHTML = `<div class="comment-empty-state">Failed to load comments</div>`;
+            return;
+        }
+
+        const comments = data.comments || [];
+        if (comments.length === 0) {
+            list.innerHTML = `
+                <div class="comment-empty-state">
+                    No comments yet. Start the conversation by posting below!
+                </div>
+            `;
+            return;
+        }
+
+        list.innerHTML = "";
+        comments.forEach(c => {
+            const roleClass = (c.user_role || "developer").toLowerCase();
+            const canDelete = c.user_id === user.id || user.role === "Admin";
+            const deleteBtn = canDelete
+                ? `<button type="button" class="comment-delete-btn" onclick="deleteComment(${requestId}, ${c.id})">Delete</button>`
+                : "";
+
+            const item = document.createElement("div");
+            item.className = "comment-item";
+            item.innerHTML = `
+                <div class="comment-meta">
+                    <div class="comment-author-info">
+                        <span class="comment-author">${escapeHtml(c.user_name || "Unknown")}</span>
+                        <span class="role-badge ${roleClass}">${escapeHtml(c.user_role || "Developer")}</span>
+                    </div>
+                    <span class="comment-time">${formatRelativeTime(c.created_at)}</span>
+                </div>
+                <div class="comment-text">${escapeHtml(c.comment)}</div>
+                ${deleteBtn ? `<div class="comment-actions">${deleteBtn}</div>` : ""}
+            `;
+            list.appendChild(item);
+        });
+
+        // Scroll to bottom
+        list.scrollTop = list.scrollHeight;
+    } catch (err) {
+        console.error("Load comments error:", err);
+        list.innerHTML = `<div class="comment-empty-state">Error loading discussion</div>`;
+    }
+}
+
+async function submitComment() {
+    if (!activeRequestId) return;
+    const textInput = document.getElementById("newCommentText");
+    const comment = textInput.value.trim();
+
+    if (!comment) return;
+
+    const btn = document.getElementById("sendCommentBtn");
+    btn.disabled = true;
+    btn.textContent = "Posting...";
+
+    try {
+        const response = await fetch(`/api/change-requests/${activeRequestId}/comments`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ comment })
+        });
+
+        const data = await response.json();
+        if (!response.ok || !data.success) {
+            alert(data.message || "Failed to post comment");
+            return;
+        }
+
+        textInput.value = "";
+        await loadComments(activeRequestId);
+        loadRequests(); // Refresh comment count in background table
+    } catch (err) {
+        console.error("Submit comment error:", err);
+        alert("Network error posting comment");
+    } finally {
+        btn.disabled = false;
+        btn.textContent = "Post Comment";
+    }
+}
+
+async function deleteComment(requestId, commentId) {
+    if (!confirm("Are you sure you want to delete this comment?")) return;
+
+    try {
+        const response = await fetch(`/api/change-requests/${requestId}/comments/${commentId}`, {
+            method: "DELETE"
+        });
+
+        const data = await response.json();
+        if (!response.ok || !data.success) {
+            alert(data.message || "Failed to delete comment");
+            return;
+        }
+
+        await loadComments(requestId);
+        loadRequests(); // Refresh comment count in background table
+    } catch (err) {
+        console.error("Delete comment error:", err);
+        alert("Failed to delete comment");
+    }
+}
+
+
+// Close modal on escape key or clicking backdrop
+document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape" && activeRequestId) {
+        closeCommentsModal();
+    }
+});
+
+const commentsModalEl = document.getElementById("commentsModal");
+if (commentsModalEl) {
+    commentsModalEl.addEventListener("click", (e) => {
+        if (e.target === commentsModalEl) {
+            closeCommentsModal();
+        }
+    });
 }
 
 

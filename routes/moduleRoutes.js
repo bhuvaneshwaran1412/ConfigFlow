@@ -5,10 +5,14 @@ const {
     getModules,
     addModule,
     updateModule,
-    deleteModule
+    deleteModule,
+    getModuleImpact,
+    getDependencies
 } = require("../controllers/moduleController");
 const { authorizeRoles } = require("../middleware/authorization");
 
+router.get("/modules/dependencies", getDependencies);
+router.get("/modules/:id/impact", getModuleImpact);
 router.get("/modules", getModules);
 router.post("/modules", authorizeRoles("Admin", "Manager", "Developer"), addModule);
 router.put("/modules/:id", authorizeRoles("Admin", "Manager", "Developer"), updateModule);

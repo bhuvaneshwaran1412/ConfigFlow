@@ -77,6 +77,29 @@
             </div>
         </section>
 
+        <!-- VISUAL ANALYTICS CHARTS -->
+        <section class="charts-grid" aria-label="Visual Reports Analytics">
+            <div class="chart-card">
+                <div class="chart-card-header">
+                    <h3>Change Velocity & Activity Trends</h3>
+                    <span>Monthly change request volume</span>
+                </div>
+                <div class="chart-wrapper">
+                    <canvas id="trendsLineChart"></canvas>
+                </div>
+            </div>
+
+            <div class="chart-card">
+                <div class="chart-card-header">
+                    <h3>Module Change Density</h3>
+                    <span>Activity distribution across modules</span>
+                </div>
+                <div class="chart-wrapper">
+                    <canvas id="moduleBarChart"></canvas>
+                </div>
+            </div>
+        </section>
+
         <div class="reports-tables">
             <!-- PROJECT REPORT -->
             <section class="dashboard-section report-panel">
@@ -141,6 +164,7 @@
         </div>
     </main>
 
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="../js/icons.js"></script>
     <script src="../js/sidebar.js"></script>
     <script src="../js/reports.js"></script>

@@ -2,6 +2,36 @@ const db = require("../config/db");
 const { writeAuditLog } = require("../utils/auditLog");
 
 
+// Ensure comments table and change_type column exist
+const initCommentsTable = () => {
+    const tableSql = `
+    CREATE TABLE IF NOT EXISTS change_request_comments (
+        id INT NOT NULL AUTO_INCREMENT,
+        change_request_id INT NOT NULL,
+        user_id INT NOT NULL,
+        comment TEXT NOT NULL,
+        created_at TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP,
+        PRIMARY KEY (id),
+        KEY change_request_id (change_request_id),
+        KEY user_id (user_id),
+        CONSTRAINT fk_crc_change_request FOREIGN KEY (change_request_id) REFERENCES change_requests (id) ON DELETE CASCADE,
+        CONSTRAINT fk_crc_user FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+    `;
+    db.query(tableSql, (err) => {
+        if (err) {
+            console.error("Failed to initialize change_request_comments table:", err.message);
+        }
+    });
+
+    const alterSql = `ALTER TABLE change_requests ADD COLUMN change_type ENUM('Patch', 'Minor', 'Major') DEFAULT 'Patch' AFTER priority`;
+    db.query(alterSql, (err) => {
+        // Ignored if column already exists
+    });
+};
+initCommentsTable();
+
+
 // =========================================
 // GET ALL CHANGE REQUESTS
 // =========================================
@@ -30,7 +60,8 @@ const getChangeRequests = (req, res) => {
             cr.*,
             p.project_name,
             m.module_name,
-            u.name AS developer
+            u.name AS developer,
+            (SELECT COUNT(*) FROM change_request_comments crc WHERE crc.change_request_id = cr.id) AS comment_count
         FROM change_requests cr
         JOIN projects p
             ON cr.project_id = p.id
@@ -69,8 +100,13 @@ const addChangeRequest = (req, res) => {
         title,
         description,
         priority,
+        change_type,
         created_by
     } = req.body;
+
+    const validatedChangeType = ["Patch", "Minor", "Major"].includes(change_type)
+        ? change_type
+        : "Patch";
 
 
     const attachment = req.file
@@ -120,10 +156,11 @@ const addChangeRequest = (req, res) => {
             title,
             description,
             priority,
+            change_type,
             attachment,
             created_by
         )
-        VALUES (?, ?, ?, ?, ?, ?, ?)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?)
     `;
 
 
@@ -135,6 +172,7 @@ const addChangeRequest = (req, res) => {
             title,
             description,
             priority,
+            validatedChangeType,
             attachment,
             req.user.id
         ],
@@ -220,11 +258,148 @@ const deleteChangeRequest = (req, res) => {
 
 
 // =========================================
+// GET COMMENTS FOR CHANGE REQUEST
+// =========================================
+
+const getComments = (req, res) => {
+    const requestId = req.params.id;
+
+    const sql = `
+        SELECT
+            c.id,
+            c.change_request_id,
+            c.user_id,
+            c.comment,
+            c.created_at,
+            u.name AS user_name,
+            u.role AS user_role
+        FROM change_request_comments c
+        JOIN users u ON c.user_id = u.id
+        WHERE c.change_request_id = ?
+        ORDER BY c.created_at ASC
+    `;
+
+    db.query(sql, [requestId], (err, results) => {
+        if (err) {
+            console.error("Error fetching comments:", err);
+            return res.status(500).json({ success: false, message: "Failed to fetch comments" });
+        }
+        res.json({ success: true, comments: results });
+    });
+};
+
+
+// =========================================
+// ADD COMMENT TO CHANGE REQUEST
+// =========================================
+
+const addComment = (req, res) => {
+    const requestId = req.params.id;
+    const { comment } = req.body;
+    const userId = req.user.id;
+
+    if (!comment || !comment.trim()) {
+        return res.status(400).json({ success: false, message: "Comment text is required" });
+    }
+
+    // Verify change request exists
+    const checkSql = "SELECT id, title FROM change_requests WHERE id = ?";
+    db.query(checkSql, [requestId], (checkErr, crRows) => {
+        if (checkErr) {
+            console.error("Error checking change request:", checkErr);
+            return res.status(500).json({ success: false, message: "Database error" });
+        }
+        if (!crRows.length) {
+            return res.status(404).json({ success: false, message: "Change request not found" });
+        }
+
+        const insertSql = `
+            INSERT INTO change_request_comments (change_request_id, user_id, comment)
+            VALUES (?, ?, ?)
+        `;
+
+        db.query(insertSql, [requestId, userId, comment.trim()], (insertErr, result) => {
+            if (insertErr) {
+                console.error("Error adding comment:", insertErr);
+                return res.status(500).json({ success: false, message: "Failed to post comment" });
+            }
+
+            const commentId = result.insertId;
+            writeAuditLog(userId, "Posted Comment on CR", `#${requestId}: ${comment.trim().substring(0, 40)}`);
+
+            // Fetch and return the newly created comment with author info
+            const fetchSql = `
+                SELECT
+                    c.id,
+                    c.change_request_id,
+                    c.user_id,
+                    c.comment,
+                    c.created_at,
+                    u.name AS user_name,
+                    u.role AS user_role
+                FROM change_request_comments c
+                JOIN users u ON c.user_id = u.id
+                WHERE c.id = ?
+            `;
+
+            db.query(fetchSql, [commentId], (fetchErr, commentRows) => {
+                if (fetchErr || !commentRows.length) {
+                    return res.json({
+                        success: true,
+                        message: "Comment added",
+                        comment: { id: commentId, change_request_id: requestId, user_id: userId, comment: comment.trim(), created_at: new Date() }
+                    });
+                }
+                res.json({
+                    success: true,
+                    message: "Comment added",
+                    comment: commentRows[0]
+                });
+            });
+        });
+    });
+};
+
+
+// =========================================
+// DELETE COMMENT
+// =========================================
+
+const deleteComment = (req, res) => {
+    const { id: requestId, commentId } = req.params;
+    const userId = req.user.id;
+    const userRole = req.user.role;
+
+    const findSql = "SELECT user_id FROM change_request_comments WHERE id = ? AND change_request_id = ?";
+    db.query(findSql, [commentId, requestId], (findErr, rows) => {
+        if (findErr) return res.status(500).json({ success: false, message: "Database error" });
+        if (!rows.length) return res.status(404).json({ success: false, message: "Comment not found" });
+
+        // Allow author or Admin to delete
+        if (rows[0].user_id !== userId && userRole !== "Admin") {
+            return res.status(403).json({ success: false, message: "You are not authorized to delete this comment" });
+        }
+
+        const deleteSql = "DELETE FROM change_request_comments WHERE id = ?";
+        db.query(deleteSql, [commentId], (delErr) => {
+            if (delErr) return res.status(500).json({ success: false, message: "Failed to delete comment" });
+
+            writeAuditLog(userId, "Deleted Comment from CR", `#${requestId} Comment #${commentId}`);
+            res.json({ success: true, message: "Comment deleted successfully" });
+        });
+    });
+};
+
+
+// =========================================
 // EXPORT
 // =========================================
 
 module.exports = {
     getChangeRequests,
     addChangeRequest,
-    deleteChangeRequest
+    deleteChangeRequest,
+    getComments,
+    addComment,
+    deleteComment
 };

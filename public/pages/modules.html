@@ -71,6 +71,14 @@
                 >
             </div>
 
+            <div class="form-group">
+                <label for="moduleDependencies">Depends On (Upstream Modules)</label>
+                <select id="moduleDependencies" multiple style="min-height: 80px;" class="comments-textarea">
+                    <!-- Loaded dynamically -->
+                </select>
+                <span style="color: var(--text-muted); font-size: 11px; display: block; margin-top: 4px;">Hold Ctrl/Cmd to select multiple upstream dependencies</span>
+            </div>
+
             <div class="form-actions">
                 <button type="button" class="add-btn" onclick="saveModule()">
                     Save Module
@@ -95,17 +103,33 @@
                             <th>ID</th>
                             <th>Project</th>
                             <th>Module</th>
+                            <th>Depends On</th>
+                            <th>Downstream Impact</th>
                             <th>Actions</th>
                         </tr>
                     </thead>
                     <tbody id="modulesTable">
                         <tr>
-                            <td colspan="4">
+                            <td colspan="6">
                                 Loading...
                             </td>
                         </tr>
                     </tbody>
                 </table>
+            </div>
+        </section>
+
+        <!-- DEPENDENCY & IMPACT ARCHITECTURE MAP -->
+        <section class="dashboard-section">
+            <div class="section-header">
+                <div>
+                    <h2>Architecture Dependency & Impact Map</h2>
+                    <p style="margin: 4px 0 0 0; font-size: 12px; color: var(--text-muted);">Visual module relationships & ripple risk analysis</p>
+                </div>
+            </div>
+
+            <div id="dependencyMapContainer" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 16px;">
+                <div style="color: var(--text-muted); font-size: 12px; padding: 20px;">Loading dependency topology...</div>
             </div>
         </section>
     </main>

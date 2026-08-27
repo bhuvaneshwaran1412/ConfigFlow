@@ -285,9 +285,97 @@ document
     .addEventListener("click", restoreBackup);
 
 
+// =================================
+// VISUAL CHARTS (FEATURE 3)
+// =================================
+
+let statusChartInstance = null;
+let impactChartInstance = null;
+
+async function loadDashboardCharts() {
+    try {
+        const response = await fetch("/api/reports/analytics");
+        const json = await response.json();
+        if (!response.ok || !json.success) return;
+
+        const { status, impact } = json.data;
+
+        // 1. Status Doughnut Chart
+        const statusCtx = document.getElementById("statusDonutChart");
+        if (statusCtx && typeof Chart !== "undefined") {
+            if (statusChartInstance) statusChartInstance.destroy();
+            statusChartInstance = new Chart(statusCtx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Pending', 'Approved', 'Rejected'],
+                    datasets: [{
+                        data: [Number(status.pending) || 0, Number(status.approved) || 0, Number(status.rejected) || 0],
+                        backgroundColor: ['#f59e0b', '#10b981', '#ef4444'],
+                        borderWidth: 2,
+                        borderColor: '#0a0a0a',
+                        hoverOffset: 4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                            labels: { color: '#a1a1aa', font: { family: 'inherit', size: 11 }, boxWidth: 12, padding: 14 }
+                        }
+                    },
+                    cutout: '70%'
+                }
+            });
+        }
+
+        // 2. Impact Bar Chart
+        const impactCtx = document.getElementById("impactBarChart");
+        if (impactCtx && typeof Chart !== "undefined") {
+            if (impactChartInstance) impactChartInstance.destroy();
+            impactChartInstance = new Chart(impactCtx, {
+                type: 'bar',
+                data: {
+                    labels: ['Patch', 'Minor', 'Major'],
+                    datasets: [{
+                        label: 'Change Requests',
+                        data: [Number(impact.patch) || 0, Number(impact.minor) || 0, Number(impact.major) || 0],
+                        backgroundColor: ['#3b82f6', '#10b981', '#ef4444'],
+                        borderRadius: 6,
+                        borderSkipped: false
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false }
+                    },
+                    scales: {
+                        x: {
+                            grid: { display: false },
+                            ticks: { color: '#71717a', font: { family: 'inherit', size: 11 } }
+                        },
+                        y: {
+                            grid: { color: '#1f1f22' },
+                            ticks: { color: '#71717a', precision: 0, font: { family: 'inherit', size: 11 } }
+                        }
+                    }
+                }
+            });
+        }
+    } catch (err) {
+        console.error("Dashboard charts error:", err);
+    }
+}
+
+
 // Load everything
 
 loadDashboard();
+
+loadDashboardCharts();
 
 loadRecentRequests();
 

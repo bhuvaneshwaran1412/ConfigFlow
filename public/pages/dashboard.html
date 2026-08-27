@@ -122,6 +122,29 @@
             </div>
         </section>
 
+        <!-- VISUAL ANALYTICS CHARTS -->
+        <section class="charts-grid" aria-label="Visual Analytics">
+            <div class="chart-card">
+                <div class="chart-card-header">
+                    <h3>Request Status Distribution</h3>
+                    <span>Real-time status ratio</span>
+                </div>
+                <div class="chart-wrapper">
+                    <canvas id="statusDonutChart"></canvas>
+                </div>
+            </div>
+
+            <div class="chart-card">
+                <div class="chart-card-header">
+                    <h3>Change Impact & SemVer Mix</h3>
+                    <span>Patch vs. Minor vs. Major releases</span>
+                </div>
+                <div class="chart-wrapper">
+                    <canvas id="impactBarChart"></canvas>
+                </div>
+            </div>
+        </section>
+
         <!-- NOTIFICATIONS -->
         <section class="dashboard-section dashboard-notifications">
             <div class="section-header">
@@ -196,6 +219,7 @@
         </section>
     </main>
 
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="../js/icons.js"></script>
     <script src="../js/sidebar.js"></script>
     <script src="../js/dashboard.js"></script>

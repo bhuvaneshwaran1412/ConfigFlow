@@ -6,7 +6,10 @@ const router = express.Router();
 const {
     getChangeRequests,
     addChangeRequest,
-    deleteChangeRequest
+    deleteChangeRequest,
+    getComments,
+    addComment,
+    deleteComment
 } = require("../controllers/changeRequestController");
 
 const {
@@ -79,6 +82,26 @@ router.post(
 router.delete(
     "/change-requests/:id",
     deleteChangeRequest
+);
+
+
+// =====================================
+// COMMENTS
+// =====================================
+
+router.get(
+    "/change-requests/:id/comments",
+    getComments
+);
+
+router.post(
+    "/change-requests/:id/comments",
+    addComment
+);
+
+router.delete(
+    "/change-requests/:id/comments/:commentId",
+    deleteComment
 );
 
 
